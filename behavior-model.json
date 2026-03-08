@@ -11,6 +11,7 @@
         "backoff": "exponential",
         "retry_on": [
           429,
+          500,
           503
         ]
       }
@@ -39,6 +40,7 @@
         "backoff": "exponential",
         "retry_on": [
           429,
+          500,
           503
         ]
       }
@@ -139,6 +141,7 @@
         "backoff": "exponential",
         "retry_on": [
           429,
+          500,
           503
         ]
       }
@@ -151,6 +154,7 @@
         "backoff": "exponential",
         "retry_on": [
           429,
+          500,
           503
         ]
       }
@@ -163,6 +167,7 @@
         "backoff": "exponential",
         "retry_on": [
           429,
+          500,
           503
         ]
       }
@@ -175,6 +180,7 @@
         "backoff": "exponential",
         "retry_on": [
           429,
+          500,
           503
         ]
       }
@@ -187,6 +193,20 @@
         "backoff": "exponential",
         "retry_on": [
           429,
+          500,
+          503
+        ]
+      }
+    },
+    "DeleteColumn": {
+      "idempotent": true,
+      "retry": {
+        "max": 3,
+        "base_delay_ms": 1000,
+        "backoff": "exponential",
+        "retry_on": [
+          429,
+          500,
           503
         ]
       }
@@ -199,6 +219,7 @@
         "backoff": "exponential",
         "retry_on": [
           429,
+          500,
           503
         ]
       }
@@ -211,6 +232,7 @@
         "backoff": "exponential",
         "retry_on": [
           429,
+          500,
           503
         ]
       }
@@ -223,6 +245,7 @@
         "backoff": "exponential",
         "retry_on": [
           429,
+          500,
           503
         ]
       }
@@ -235,6 +258,7 @@
         "backoff": "exponential",
         "retry_on": [
           429,
+          500,
           503
         ]
       }
@@ -256,6 +280,7 @@
         "backoff": "exponential",
         "retry_on": [
           429,
+          500,
           503
         ]
       }
@@ -268,6 +293,7 @@
         "backoff": "exponential",
         "retry_on": [
           429,
+          500,
           503
         ]
       }
@@ -280,6 +306,7 @@
         "backoff": "exponential",
         "retry_on": [
           429,
+          500,
           503
         ]
       }
@@ -292,6 +319,7 @@
         "backoff": "exponential",
         "retry_on": [
           429,
+          500,
           503
         ]
       }
@@ -304,6 +332,7 @@
         "backoff": "exponential",
         "retry_on": [
           429,
+          500,
           503
         ]
       }
@@ -316,6 +345,7 @@
         "backoff": "exponential",
         "retry_on": [
           429,
+          500,
           503
         ]
       }
@@ -328,6 +358,7 @@
         "backoff": "exponential",
         "retry_on": [
           429,
+          500,
           503
         ]
       }
@@ -340,6 +371,7 @@
         "backoff": "exponential",
         "retry_on": [
           429,
+          500,
           503
         ]
       }
@@ -352,6 +384,7 @@
         "backoff": "exponential",
         "retry_on": [
           429,
+          500,
           503
         ]
       }
@@ -364,6 +397,7 @@
         "backoff": "exponential",
         "retry_on": [
           429,
+          500,
           503
         ]
       }
@@ -381,6 +415,7 @@
         "backoff": "exponential",
         "retry_on": [
           429,
+          500,
           503
         ]
       }
@@ -393,6 +428,7 @@
         "backoff": "exponential",
         "retry_on": [
           429,
+          500,
           503
         ]
       }
@@ -410,6 +446,7 @@
         "backoff": "exponential",
         "retry_on": [
           429,
+          500,
           503
         ]
       }
@@ -422,6 +459,7 @@
         "backoff": "exponential",
         "retry_on": [
           429,
+          500,
           503
         ]
       }
@@ -434,6 +472,7 @@
         "backoff": "exponential",
         "retry_on": [
           429,
+          500,
           503
         ]
       }
@@ -451,6 +490,7 @@
         "backoff": "exponential",
         "retry_on": [
           429,
+          500,
           503
         ]
       }
@@ -468,6 +508,7 @@
         "backoff": "exponential",
         "retry_on": [
           429,
+          500,
           503
         ]
       }
@@ -480,30 +521,43 @@
         "backoff": "exponential",
         "retry_on": [
           429,
+          500,
           503
         ]
       }
     },
     "ListTags": {
       "readonly": true,
+      "pagination": {
+        "style": "link",
+        "page_param": "page",
+        "max_page_size": null
+      },
       "retry": {
         "max": 3,
         "base_delay_ms": 1000,
         "backoff": "exponential",
         "retry_on": [
           429,
+          500,
           503
         ]
       }
     },
     "ListUsers": {
       "readonly": true,
+      "pagination": {
+        "style": "link",
+        "page_param": "page",
+        "max_page_size": null
+      },
       "retry": {
         "max": 3,
         "base_delay_ms": 1000,
         "backoff": "exponential",
         "retry_on": [
           429,
+          500,
           503
         ]
       }
@@ -516,6 +570,7 @@
         "backoff": "exponential",
         "retry_on": [
           429,
+          500,
           503
         ]
       }
@@ -528,6 +583,7 @@
         "backoff": "exponential",
         "retry_on": [
           429,
+          500,
           503
         ]
       }
@@ -540,6 +596,7 @@
         "backoff": "exponential",
         "retry_on": [
           429,
+          500,
           503
         ]
       }
@@ -552,6 +609,7 @@
         "backoff": "exponential",
         "retry_on": [
           429,
+          500,
           503
         ]
       }
@@ -564,6 +622,7 @@
         "backoff": "exponential",
         "retry_on": [
           429,
+          500,
           503
         ]
       }
@@ -592,6 +651,7 @@
         "backoff": "exponential",
         "retry_on": [
           429,
+          500,
           503
         ]
       }
@@ -620,6 +680,7 @@
         "backoff": "exponential",
         "retry_on": [
           429,
+          500,
           503
         ]
       }
@@ -632,6 +693,7 @@
         "backoff": "exponential",
         "retry_on": [
           429,
+          500,
           503
         ]
       }
@@ -644,6 +706,7 @@
         "backoff": "exponential",
         "retry_on": [
           429,
+          500,
           503
         ]
       }
@@ -656,6 +719,7 @@
         "backoff": "exponential",
         "retry_on": [
           429,
+          500,
           503
         ]
       }
@@ -668,6 +732,7 @@
         "backoff": "exponential",
         "retry_on": [
           429,
+          500,
           503
         ]
       }
@@ -680,6 +745,7 @@
         "backoff": "exponential",
         "retry_on": [
           429,
+          500,
           503
         ]
       }
@@ -692,6 +758,7 @@
         "backoff": "exponential",
         "retry_on": [
           429,
+          500,
           503
         ]
       }
@@ -704,6 +771,7 @@
         "backoff": "exponential",
         "retry_on": [
           429,
+          500,
           503
         ]
       }
@@ -716,6 +784,7 @@
         "backoff": "exponential",
         "retry_on": [
           429,
+          500,
           503
         ]
       }
@@ -728,6 +797,7 @@
         "backoff": "exponential",
         "retry_on": [
           429,
+          500,
           503
         ]
       }
@@ -740,6 +810,7 @@
         "backoff": "exponential",
         "retry_on": [
           429,
+          500,
           503
         ]
       }
@@ -752,6 +823,7 @@
         "backoff": "exponential",
         "retry_on": [
           429,
+          500,
           503
         ]
       }
@@ -764,6 +836,7 @@
         "backoff": "exponential",
         "retry_on": [
           429,
+          500,
           503
         ]
       }
@@ -776,6 +849,7 @@
         "backoff": "exponential",
         "retry_on": [
           429,
+          500,
           503
         ]
       }
@@ -788,6 +862,7 @@
         "backoff": "exponential",
         "retry_on": [
           429,
+          500,
           503
         ]
       }

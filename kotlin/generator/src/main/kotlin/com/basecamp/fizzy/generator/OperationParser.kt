@@ -23,6 +23,7 @@ data class ParsedOperation(
     val isMutation: Boolean,
     val resourceType: String,
     val hasPagination: Boolean,
+    val isAccountScoped: Boolean,
 )
 
 data class PathParam(val name: String, val type: String, val description: String?)
@@ -163,6 +164,7 @@ class OperationParser(private val api: OpenApiParser) {
         val resourceType = extractResourceType(operationId)
         val hasPagination = operation.containsKey("x-fizzy-pagination")
 
+        val isAccountScoped = path.startsWith("/{accountId}")
         val convertedPath = path.replace(Regex("^/\\{accountId}"), "")
 
         return ParsedOperation(
@@ -183,6 +185,7 @@ class OperationParser(private val api: OpenApiParser) {
             isMutation = isMutation,
             resourceType = resourceType,
             hasPagination = hasPagination,
+            isAccountScoped = isAccountScoped,
         )
     }
 
@@ -226,22 +229,26 @@ class OperationParser(private val api: OpenApiParser) {
             for (method in listOf("get", "post", "put", "patch", "delete")) {
                 val operation = pathItem.jsonObject[method]?.jsonObject ?: continue
                 val operationId = operation["operationId"]!!.jsonPrimitive.content
-                val tag = operation["tags"]?.jsonArray?.firstOrNull()?.jsonPrimitive?.content ?: "Untagged"
+                val tag = operation["tags"]?.jsonArray?.firstOrNull()?.jsonPrimitive?.content
 
                 val parsed = parseOperation(path, method, operation)
 
-                // Determine service name
-                val serviceName = if (tag in SERVICE_SPLITS) {
-                    var found: String? = null
-                    for ((svc, opIds) in SERVICE_SPLITS[tag]!!) {
-                        if (operationId in opIds) {
-                            found = svc
-                            break
+                // Determine service name: use tag if mapped, otherwise derive from operationId
+                val serviceName = if (tag != null && tag in TAG_TO_SERVICE) {
+                    if (tag in SERVICE_SPLITS) {
+                        var found: String? = null
+                        for ((svc, opIds) in SERVICE_SPLITS[tag]!!) {
+                            if (operationId in opIds) {
+                                found = svc
+                                break
+                            }
                         }
+                        found ?: TAG_TO_SERVICE[tag]!!
+                    } else {
+                        TAG_TO_SERVICE[tag]!!
                     }
-                    found ?: (TAG_TO_SERVICE[tag] ?: tag.replace("\\s+".toRegex(), ""))
                 } else {
-                    TAG_TO_SERVICE[tag] ?: tag.replace("\\s+".toRegex(), "")
+                    deriveServiceName(operationId)
                 }
 
                 val service = services.getOrPut(serviceName) {

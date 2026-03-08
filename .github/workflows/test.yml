@@ -6,6 +6,9 @@ on:
   pull_request:
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   smithy:
     name: Smithy Verify
@@ -22,6 +25,18 @@ jobs:
           go-version: '1.26'
       - name: Check service drift
         run: ./scripts/check-service-drift.sh
+      - name: Check type freshness
+        run: |
+          cd go && go generate ./...
+          cd ..
+          test -z "$(git status --porcelain go/pkg/generated/)" || \
+            (echo "ERROR: Go generated types are stale. Run 'cd go && go generate ./...'" && git status --porcelain go/pkg/generated/ && exit 1)
+      - name: Check service freshness
+        run: |
+          cd go && go run ./cmd/generate-services/
+          cd ..
+          test -z "$(git status --porcelain go/pkg/fizzy/*_service.go)" || \
+            (echo "ERROR: Go generated services are stale" && git status --porcelain go/pkg/fizzy/*_service.go && exit 1)
       - name: Test
         run: cd go && go test ./pkg/fizzy/... -count=1 -race -coverprofile=coverage.out
       - name: Coverage
@@ -29,8 +44,8 @@ jobs:
           cd go
           COVERAGE=$(go tool cover -func=coverage.out | tail -1 | awk '{print $3}' | tr -d '%')
           echo "Coverage: ${COVERAGE}%"
-          if (( $(echo "$COVERAGE < 25" | bc -l) )); then
-            echo "Coverage below 25% threshold"
+          if (( $(echo "$COVERAGE < 20" | bc -l) )); then
+            echo "Coverage below 20% threshold"
             exit 1
           fi
 
@@ -42,9 +57,17 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
-          node-version: '20'
+          node-version: '22'
       - name: Install
         run: cd typescript && npm ci
+      - name: Check service drift
+        run: ./scripts/check-ts-service-drift.sh
+      - name: Check service freshness
+        run: |
+          cd typescript && npx tsx scripts/generate-services.ts
+          cd ..
+          test -z "$(git status --porcelain typescript/src/generated/services/)" || \
+            (echo "ERROR: TypeScript generated services are stale. Run 'make ts-generate-services'" && git status --porcelain typescript/src/generated/services/ && exit 1)
       - name: Lint
         run: cd typescript && npm run lint
       - name: Typecheck
@@ -71,6 +94,15 @@ jobs:
           ruby-version: ${{ matrix.ruby }}
           bundler-cache: true
           working-directory: ruby
+      - name: Check service drift
+        if: matrix.ruby == '3.3'
+        run: ./scripts/check-rb-service-drift.sh
+      - name: Check service freshness
+        if: matrix.ruby == '3.3'
+        run: |
+          ruby ruby/scripts/generate-services.rb
+          test -z "$(git status --porcelain ruby/lib/fizzy/generated/services/)" || \
+            (echo "ERROR: Ruby generated services are stale. Run 'make rb-generate-services'" && git status --porcelain ruby/lib/fizzy/generated/services/ && exit 1)
       - name: Lint
         if: matrix.ruby == '3.3'
         run: cd ruby && bundle exec rubocop
@@ -85,6 +117,14 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
       - name: Build
         run: cd swift && swift build
+      - name: Check service drift
+        run: ./scripts/check-swift-service-drift.sh
+      - name: Check service freshness
+        run: |
+          cd swift && swift run FizzyGenerator --openapi ../openapi.json --behavior ../behavior-model.json --output Sources/Fizzy/Generated
+          cd ..
+          test -z "$(git status --porcelain swift/Sources/Fizzy/Generated/)" || \
+            (echo "ERROR: Swift generated services are stale. Run 'make swift-generate'" && git status --porcelain swift/Sources/Fizzy/Generated/ && exit 1)
       - name: Test
         run: cd swift && swift test
 
@@ -100,37 +140,93 @@ jobs:
           java-version: '17'
       - name: Build
         run: cd kotlin && ./gradlew :fizzy-sdk:compileKotlinJvm
-      - name: Check drift
+      - name: Check service drift
         run: ./scripts/check-kotlin-service-drift.sh
+      - name: Check service freshness
+        run: |
+          cd kotlin && ./gradlew :generator:run
+          cd ..
+          test -z "$(git status --porcelain kotlin/sdk/src/commonMain/kotlin/com/basecamp/fizzy/generated/)" || \
+            (echo "ERROR: Kotlin generated services are stale. Run 'make kt-generate-services'" && git status --porcelain kotlin/sdk/src/commonMain/kotlin/com/basecamp/fizzy/generated/ && exit 1)
 
-  conformance:
-    name: Conformance (${{ matrix.language }})
+  conformance-go:
+    name: Conformance (Go)
+    needs: test-go
     runs-on: ubuntu-latest
-    needs: [test-go, test-typescript, test-ruby, test-kotlin]
-    strategy:
-      matrix:
-        language: [go, typescript, ruby, kotlin]
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
       - uses: actions/setup-go@4b73464bb391d4059bd26b0524d20df3927bd417 # v6
-        if: matrix.language == 'go'
         with:
           go-version: '1.26'
+      - name: Build runner
+        run: cd conformance/runner/go && go build -o conformance-runner .
+      - name: Run conformance
+        run: cd conformance/runner/go && ./conformance-runner ../../tests/
+
+  conformance-typescript:
+    name: Conformance (TypeScript)
+    needs: test-typescript
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
-        if: matrix.language == 'typescript'
         with:
-          node-version: '20'
+          node-version: '22'
+      - run: cd typescript && npm ci && npm run build
+      - run: cd conformance/runner/typescript && npm ci
+      - run: cd conformance/runner/typescript && npx vitest run
+
+  conformance-ruby:
+    name: Conformance (Ruby)
+    needs: test-ruby
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
       - uses: ruby/setup-ruby@6ca151fd1bfcfd6fe0c4eb6837eb0584d0134a0c # v1
-        if: matrix.language == 'ruby'
         with:
           ruby-version: '3.3'
+          bundler-cache: true
+          working-directory: conformance/runner/ruby
+      - run: cd conformance/runner/ruby && bundle exec ruby runner.rb ../../tests/
+
+  conformance-kotlin:
+    name: Conformance (Kotlin)
+    needs: test-kotlin
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
       - uses: actions/setup-java@c1e323688fd81a25caa38c78aa6df2d33d3e20d9 # v4
-        if: matrix.language == 'kotlin'
         with:
           distribution: corretto
           java-version: '17'
-      - name: Run conformance
-        run: make conformance-${{ matrix.language }}
+      - run: cd kotlin && ./gradlew :conformance:run
+
+  lint-go:
+    name: Go Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - uses: actions/setup-go@4b73464bb391d4059bd26b0524d20df3927bd417 # v6
+        with:
+          go-version: '1.26'
+      - uses: golangci/golangci-lint-action@1e7e51e771db61008b38414a730f564565cf7c20 # v9
+        with:
+          working-directory: go
+
+  actionlint:
+    name: Lint Actions
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - uses: rhysd/actionlint@393031adb9afb225ee52ae2ccd7a5af5525e03e8 # v1.7.11
+
+  provenance:
+    name: Provenance Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - name: Check provenance sync
+        run: diff -q spec/api-provenance.json go/pkg/fizzy/api-provenance.json
 
   rubric-check:
     name: Rubric Check

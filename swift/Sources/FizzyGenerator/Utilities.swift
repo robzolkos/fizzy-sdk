@@ -2,19 +2,28 @@ import Foundation
 
 // MARK: - String Utilities
 
-/// Converts a snake_case string to camelCase.
+/// Converts a snake_case string to lowerCamelCase.
+///
+/// Splits on `_`, lowercases the first segment, capitalizes only the first
+/// character of each subsequent segment and lowercases the rest. Empty
+/// segments from consecutive or leading underscores are skipped.
+///
+/// For strings without underscores (already camelCase), just lowercases
+/// the first character.
 func toCamelCase(_ str: String) -> String {
-    var result = ""
-    var capitalizeNext = false
-    for ch in str {
-        if ch == "_" {
-            capitalizeNext = true
-        } else if capitalizeNext {
-            result.append(ch.uppercased().first!)
-            capitalizeNext = false
-        } else {
-            result.append(ch)
-        }
+    let parts = str.split(separator: "_", omittingEmptySubsequences: false)
+    guard let first = parts.first else { return str }
+    if parts.count == 1 {
+        // No underscores — just lowercase first character
+        return lowercaseFirst(String(first))
+    }
+    let nonEmpty = parts.filter { !$0.isEmpty }
+    guard let head = nonEmpty.first else { return str }
+    var result = head.lowercased()
+    for part in nonEmpty.dropFirst() {
+        guard let initial = part.first else { continue }
+        result += initial.uppercased()
+        result += part.dropFirst().lowercased()
     }
     return result
 }

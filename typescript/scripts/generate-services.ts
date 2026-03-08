@@ -162,6 +162,57 @@ const TAG_TO_SERVICE: Record<string, string> = {
 };
 
 /**
+ * Derive service name from operationId when tags are absent.
+ * Uses suffix matching with explicit overrides for compound/ambiguous names.
+ */
+function deriveServiceName(operationId: string): string {
+  const overrides: Record<string, string> = {
+    GetMyIdentity: "Identity",
+    CreateDirectUpload: "Uploads",
+    RedeemMagicLink: "Sessions",
+    CompleteSignup: "Sessions",
+    GetNotificationTray: "Notifications",
+    BulkReadNotifications: "Notifications",
+    DeleteCardImage: "Cards",
+  };
+  if (overrides[operationId]) return overrides[operationId]!;
+
+  // Suffix matching — longest suffixes first to avoid false matches
+  const suffixMap: [string, string][] = [
+    ["CommentReactions", "Reactions"],
+    ["CommentReaction", "Reactions"],
+    ["CardReactions", "Reactions"],
+    ["CardReaction", "Reactions"],
+    ["Notifications", "Notifications"],
+    ["Notification", "Notifications"],
+    ["Comments", "Comments"],
+    ["Comment", "Comments"],
+    ["Webhooks", "Webhooks"],
+    ["Webhook", "Webhooks"],
+    ["Columns", "Columns"],
+    ["Column", "Columns"],
+    ["Boards", "Boards"],
+    ["Board", "Boards"],
+    ["Cards", "Cards"],
+    ["Card", "Cards"],
+    ["Steps", "Steps"],
+    ["Step", "Steps"],
+    ["Users", "Users"],
+    ["User", "Users"],
+    ["Tags", "Tags"],
+    ["Pins", "Pins"],
+    ["Session", "Sessions"],
+    ["Device", "Devices"],
+  ];
+
+  for (const [suffix, service] of suffixMap) {
+    if (operationId.endsWith(suffix)) return service;
+  }
+
+  return "Miscellaneous";
+}
+
+/**
  * Verb extraction patterns for operationId -> method name mapping.
  */
 const VERB_PATTERNS = [
@@ -474,7 +525,7 @@ function parseOperation(
     }
   }
 
-  // Response
+  // Response — follow $ref chains through wrapper types (e.g. GetBoardResponseContent -> Board)
   let responseSchemaRef: string | undefined;
   let returnsArray = false;
   let returnsVoid = true;
@@ -483,8 +534,25 @@ function parseOperation(
   for (const status of successResponses) {
     const resp = operation.responses?.[status];
     if (resp?.content?.["application/json"]?.schema) {
-      const schema = resp.content["application/json"].schema;
+      let schema = resp.content["application/json"].schema;
       returnsVoid = false;
+
+      // Resolve top-level $ref first
+      if (schema.$ref) {
+        const refName = resolveRef(schema.$ref);
+        const resolved = globalSchemas[refName];
+        if (resolved) {
+          // If the wrapper is itself a $ref (e.g. GetBoardResponseContent -> Board), follow it
+          if (resolved.$ref) {
+            responseSchemaRef = resolveRef(resolved.$ref);
+            break;
+          }
+          schema = resolved;
+        } else {
+          responseSchemaRef = refName;
+          break;
+        }
+      }
 
       if (schema.type === "array" && schema.items?.$ref) {
         returnsArray = true;
@@ -533,18 +601,18 @@ function groupOperationsIntoServices(
   const serviceOps = new Map<string, ParsedOperation[]>();
 
   for (const op of operations) {
-    // Find which service this operation belongs to via tag
+    // Find which service this operation belongs to via tag, fall back to operationId heuristic
     let serviceName: string | undefined;
 
     for (const [tag, ops] of taggedOps) {
-      if (ops.includes(op.operationId)) {
-        serviceName = TAG_TO_SERVICE[tag] ?? tag;
+      if (ops.includes(op.operationId) && TAG_TO_SERVICE[tag]) {
+        serviceName = TAG_TO_SERVICE[tag];
         break;
       }
     }
 
     if (!serviceName) {
-      serviceName = "Miscellaneous";
+      serviceName = deriveServiceName(op.operationId);
     }
 
     if (!serviceOps.has(serviceName)) {
@@ -552,6 +620,18 @@ function groupOperationsIntoServices(
     }
     serviceOps.get(serviceName)!.push(op);
   }
+
+  // Map entity types to their "home" service to avoid duplicate exports.
+  // E.g. "User" belongs to "Users" service, not "Sessions".
+  const ENTITY_HOME_SERVICE: Record<string, string> = {
+    Board: "Boards", Column: "Columns", Card: "Cards", Comment: "Comments",
+    Step: "Steps", Reaction: "Reactions", Notification: "Notifications",
+    NotificationTray: "Notifications", Tag: "Tags", User: "Users",
+    Pin: "Pins", Webhook: "Webhooks", Session: "Sessions", Device: "Devices",
+    Identity: "Identity", DirectUpload: "Uploads",
+    PendingAuthentication: "Sessions", SessionAuthorization: "Sessions",
+    DeviceRegistration: "Devices",
+  };
 
   const services: ServiceDefinition[] = [];
 
@@ -563,10 +643,14 @@ function groupOperationsIntoServices(
       if (op.responseSchemaRef) {
         const alias = TYPE_ALIASES[op.responseSchemaRef];
         if (alias) {
-          types.set(op.responseSchemaRef, {
-            name: alias[0],
-            schemaRef: op.responseSchemaRef,
-          });
+          // Only export from the entity's home service to avoid duplicate exports
+          const home = ENTITY_HOME_SERVICE[op.responseSchemaRef];
+          if (!home || home === name) {
+            types.set(op.responseSchemaRef, {
+              name: alias[0],
+              schemaRef: op.responseSchemaRef,
+            });
+          }
         }
       }
     }
@@ -594,7 +678,10 @@ function generateServiceFile(service: ServiceDefinition): string {
   lines.push(" */");
   lines.push("");
   lines.push('import { BaseService, type FetchResponse } from "../../services/base.js";');
-  lines.push('import { ListResult, type PaginationOptions } from "../../pagination.js";');
+  const needsPagination = service.operations.some(op => op.hasPagination || op.returnsArray);
+  if (needsPagination) {
+    lines.push('import { ListResult, type PaginationOptions } from "../../pagination.js";');
+  }
   lines.push('import type { components } from "../schema.js";');
   lines.push("");
 
@@ -648,7 +735,7 @@ function generateServiceFile(service: ServiceDefinition): string {
     lines.push(`   * ${op.description}`);
     lines.push("   */");
 
-    const methodSig = generateMethodSignature(op);
+    const methodSig = generateMethodSignature(op, service.types);
     const methodBody = generateMethodBody(op);
 
     lines.push(`  ${methodSig} {`);
@@ -667,10 +754,21 @@ function makeOptionsName(op: ParsedOperation): string {
 }
 
 function makeRequestName(op: ParsedOperation): string {
+  // Derive from schema ref when available (e.g. "RedeemMagicLinkRequestContent" -> "RedeemMagicLinkRequest")
+  if (op.bodySchemaRef) {
+    let name = op.bodySchemaRef;
+    if (name.endsWith("Content")) {
+      name = name.slice(0, -"Content".length);
+    }
+    if (!name.endsWith("Request")) {
+      name += "Request";
+    }
+    return name;
+  }
   return `${capitalize(op.methodName)}${capitalize(op.resourceType.replace(/_/g, ""))}Request`;
 }
 
-function generateMethodSignature(op: ParsedOperation): string {
+function generateMethodSignature(op: ParsedOperation, localTypes: Map<string, TypeDefinition>): string {
   const params: string[] = [];
 
   // Path params (except accountId)
@@ -695,20 +793,20 @@ function generateMethodSignature(op: ParsedOperation): string {
     params.push("options?: PaginationOptions");
   }
 
-  // Return type
+  // Return type — use local alias if exported by this service, otherwise full schema path
+  function resolveEntityType(schemaRef: string | undefined): string {
+    if (!schemaRef) return "unknown";
+    if (localTypes.has(schemaRef)) return localTypes.get(schemaRef)!.name;
+    return `components["schemas"]["${schemaRef}"]`;
+  }
+
   let returnType: string;
   if (op.returnsVoid) {
     returnType = "Promise<void>";
   } else if (op.returnsArray) {
-    const entityType = op.responseSchemaRef
-      ? (TYPE_ALIASES[op.responseSchemaRef]?.[0] ?? `components["schemas"]["${op.responseSchemaRef}"]`)
-      : "unknown";
-    returnType = `Promise<ListResult<${entityType}>>`;
+    returnType = `Promise<ListResult<${resolveEntityType(op.responseSchemaRef)}>>`;
   } else {
-    const entityType = op.responseSchemaRef
-      ? (TYPE_ALIASES[op.responseSchemaRef]?.[0] ?? `components["schemas"]["${op.responseSchemaRef}"]`)
-      : "unknown";
-    returnType = `Promise<${entityType}>`;
+    returnType = `Promise<${resolveEntityType(op.responseSchemaRef)}>`;
   }
 
   return `async ${op.methodName}(${params.join(", ")}): ${returnType}`;
@@ -728,7 +826,7 @@ function generateMethodBody(op: ParsedOperation): string {
   lines.push(`${indent}return this.${methodFn}(`);
   lines.push(`${indent}  {`);
   lines.push(`${indent}    service: "${serviceTag}",`);
-  lines.push(`${indent}    operation: "${opName}",`);
+  lines.push(`${indent}    operation: "${op.operationId}",`);
   lines.push(`${indent}    resourceType: "${op.resourceType}",`);
   lines.push(`${indent}    isMutation: ${op.isMutation},`);
   lines.push(`${indent}  },`);
@@ -749,17 +847,23 @@ function generateMethodBody(op: ParsedOperation): string {
     const queryEntries = op.queryParams
       .map((q) => `${q.name}: options?.${toCamelCase(q.name)}`)
       .join(", ");
-    fetchOpts.push(`${indent}    params: { path: { ${op.pathParams.map((p) => toCamelCase(p.name)).join(", ")} }, query: { ${queryEntries} } }`);
-    // Remove duplicate path params line
-    fetchOpts.shift();
+    const pathPart = op.pathParams.length > 0
+      ? `path: { ${op.pathParams.map((p) => toCamelCase(p.name)).join(", ")} }, `
+      : "";
+    // Remove path-only line if one was pushed above
+    if (op.pathParams.length > 0) {
+      fetchOpts.shift();
+    }
+    fetchOpts.push(`${indent}    params: { ${pathPart}query: { ${queryEntries} } }`);
   }
 
   // Body
   if (op.bodyProperties.length > 0) {
+    const bodyAccessor = `body${op.bodyRequired ? "" : "?"}`;
     const bodyEntries = op.bodyProperties
       .map((p) => {
         const camel = toCamelCase(p.name);
-        return camel === p.name ? camel : `${p.name}: body${op.bodyRequired ? "" : "?"}.${camel}`;
+        return `${p.name}: ${bodyAccessor}.${camel}`;
       })
       .join(", ");
     fetchOpts.push(`${indent}    body: { ${bodyEntries} } as never`);

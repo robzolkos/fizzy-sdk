@@ -12,8 +12,6 @@ import (
 	"strings"
 	"sync"
 	"time"
-
-	"github.com/basecamp/fizzy-sdk/go/pkg/generated"
 )
 
 // DefaultUserAgent is the default User-Agent header value.
@@ -35,10 +33,6 @@ type Client struct {
 	logger        *slog.Logger
 	httpOpts      HTTPOptions
 	hooks         Hooks
-
-	// Generated client (single shared instance, account passed per operation)
-	genOnce sync.Once
-	gen     *generated.ClientWithResponses
 
 	// Account-independent services
 	sessionsMu sync.Mutex
@@ -133,8 +127,8 @@ func WithAuthStrategy(strategy AuthStrategy) ClientOption {
 // NewClient creates a new API client with spec-driven defaults.
 //
 // The client automatically:
-//   - Retries failed GET requests with exponential backoff
-//   - Does NOT retry POST/PUT/DELETE on 429/5xx (to avoid duplicating data)
+//   - Retries idempotent requests (GET/PUT/PATCH/DELETE) with exponential backoff
+//   - Does NOT retry POST on 429/5xx (to avoid duplicating data)
 //   - Respects Retry-After headers on 429 responses
 //   - Follows pagination via Link headers
 func NewClient(cfg *Config, tokenProvider TokenProvider, opts ...ClientOption) *Client {
@@ -204,19 +198,12 @@ func NewClient(cfg *Config, tokenProvider TokenProvider, opts ...ClientOption) *
 }
 
 // ForAccount returns an AccountClient bound to the specified Fizzy account.
-// The accountID must be a numeric string (e.g., "12345"). ForAccount panics if
-// the accountID is empty or contains non-digit characters.
+// The accountID can be a numeric ID or an account slug. ForAccount panics if
+// the accountID is empty.
 func (c *Client) ForAccount(accountID string) *AccountClient {
 	if accountID == "" {
 		panic("fizzy: ForAccount requires non-empty account ID")
 	}
-	for _, r := range accountID {
-		if r < '0' || r > '9' {
-			panic("fizzy: ForAccount requires numeric account ID, got: " + accountID)
-		}
-	}
-
-	c.initGeneratedClient()
 
 	return &AccountClient{
 		parent:    c,
@@ -242,6 +229,11 @@ func (ac *AccountClient) Post(ctx context.Context, path string, body any) (*Resp
 // Put performs an account-scoped PUT request with a JSON body.
 func (ac *AccountClient) Put(ctx context.Context, path string, body any) (*Response, error) {
 	return ac.parent.doRequest(ctx, "PUT", ac.accountPath(path), body)
+}
+
+// Patch performs an account-scoped PATCH request with a JSON body.
+func (ac *AccountClient) Patch(ctx context.Context, path string, body any) (*Response, error) {
+	return ac.parent.doRequest(ctx, "PATCH", ac.accountPath(path), body)
 }
 
 // Delete performs an account-scoped DELETE request.
@@ -278,31 +270,6 @@ func (ac *AccountClient) accountPath(path string) string {
 	return "/" + ac.accountID + path
 }
 
-// initGeneratedClient initializes the shared generated OpenAPI client.
-func (c *Client) initGeneratedClient() {
-	c.genOnce.Do(func() {
-		serverURL := strings.TrimSuffix(c.cfg.BaseURL, "/")
-		authEditor := func(ctx context.Context, req *http.Request) error {
-			if err := c.authStrategy.Authenticate(ctx, req); err != nil {
-				return err
-			}
-			req.Header.Set("User-Agent", c.userAgent)
-			if req.Header.Get("Content-Type") == "" {
-				req.Header.Set("Content-Type", "application/json")
-			}
-			req.Header.Set("Accept", "application/json")
-			return nil
-		}
-		gen, err := generated.NewClientWithResponses(serverURL,
-			generated.WithHTTPClient(c.httpClient),
-			generated.WithRequestEditorFn(authEditor))
-		if err != nil {
-			panic(fmt.Sprintf("fizzy: failed to create generated client: %v", err))
-		}
-		c.gen = gen
-	})
-}
-
 // discardHandler is a slog.Handler that discards all log records.
 type discardHandler struct{}
 
@@ -324,6 +291,11 @@ func (c *Client) Post(ctx context.Context, path string, body any) (*Response, er
 // Put performs a PUT request with a JSON body.
 func (c *Client) Put(ctx context.Context, path string, body any) (*Response, error) {
 	return c.doRequest(ctx, "PUT", path, body)
+}
+
+// Patch performs a PATCH request with a JSON body.
+func (c *Client) Patch(ctx context.Context, path string, body any) (*Response, error) {
+	return c.doRequest(ctx, "PATCH", path, body)
 }
 
 // Delete performs a DELETE request.
@@ -390,8 +362,8 @@ func (c *Client) doRequest(ctx context.Context, method, path string, body any) (
 }
 
 func (c *Client) doRequestURL(ctx context.Context, method, url string, body any) (*Response, error) {
-	// Mutations (POST/PUT/DELETE): Don't retry on 429/5xx to avoid duplicating data.
-	if method != "GET" {
+	// POST and operations that opt out via WithNoRetry: single attempt only.
+	if method == "POST" || isNoRetry(ctx) {
 		resp, err := c.singleRequest(ctx, method, url, body, 1)
 		if err == nil {
 			return resp, nil
@@ -406,7 +378,7 @@ func (c *Client) doRequestURL(ctx context.Context, method, url string, body any)
 		return nil, err
 	}
 
-	// GET requests: Full retry with exponential backoff
+	// Idempotent requests (GET, PUT, PATCH, DELETE): retry with exponential backoff
 	var attempt int
 	var lastErr error
 
@@ -494,6 +466,8 @@ func (c *Client) singleRequest(ctx context.Context, method, url string, body any
 
 	c.logger.Debug("http response", "status", resp.StatusCode)
 
+	requestID := resp.Header.Get("X-Request-Id")
+
 	switch resp.StatusCode {
 	case http.StatusNotModified: // 304
 		if cacheKey != "" {
@@ -536,22 +510,47 @@ func (c *Client) singleRequest(ctx context.Context, method, url string, body any
 
 	case http.StatusTooManyRequests: // 429
 		retryAfter := parseRetryAfter(resp.Header.Get("Retry-After"))
-		return nil, ErrRateLimit(retryAfter)
+		return nil, &retryableError{
+			err: &Error{
+				Code:       CodeRateLimit,
+				Message:    "Rate limited",
+				HTTPStatus: 429,
+				Retryable:  true,
+				RequestID:  requestID,
+			},
+			retryAfter: time.Duration(retryAfter) * time.Second,
+		}
 
 	case http.StatusUnauthorized: // 401
-		return nil, ErrAuth("Authentication failed")
+		return nil, &Error{Code: CodeAuth, Message: "Authentication failed", HTTPStatus: 401, RequestID: requestID}
 
 	case http.StatusForbidden: // 403
 		if method != "GET" {
-			return nil, ErrForbiddenScope()
+			return nil, &Error{Code: CodeForbidden, Message: "Access denied: insufficient scope", Hint: "Re-authenticate with full scope", HTTPStatus: 403, RequestID: requestID}
 		}
-		return nil, ErrForbidden("Access denied")
+		return nil, &Error{Code: CodeForbidden, Message: "Access denied", HTTPStatus: 403, RequestID: requestID}
 
 	case http.StatusNotFound: // 404
-		return nil, ErrNotFound("Resource", url)
+		return nil, &Error{Code: CodeNotFound, Message: fmt.Sprintf("Resource not found: %s", url), HTTPStatus: 404, RequestID: requestID}
+
+	case http.StatusUnprocessableEntity: // 422
+		respBody, _ := limitedReadAll(resp.Body, MaxErrorBodyBytes)
+		msg := "Validation failed"
+		var parsed struct {
+			Error   string `json:"error"`
+			Message string `json:"message"`
+		}
+		if json.Unmarshal(respBody, &parsed) == nil {
+			if parsed.Error != "" {
+				msg = truncateString(parsed.Error, MaxErrorMessageBytes)
+			} else if parsed.Message != "" {
+				msg = truncateString(parsed.Message, MaxErrorMessageBytes)
+			}
+		}
+		return nil, &Error{Code: CodeValidation, Message: msg, HTTPStatus: 422, RequestID: requestID}
 
 	case http.StatusInternalServerError: // 500
-		return nil, ErrAPI(500, "Server error (500)")
+		return nil, &Error{Code: CodeAPI, Message: "Server error (500)", HTTPStatus: 500, Retryable: true, RequestID: requestID}
 
 	case http.StatusBadGateway, http.StatusServiceUnavailable, http.StatusGatewayTimeout: // 502, 503, 504
 		return nil, &Error{
@@ -559,6 +558,7 @@ func (c *Client) singleRequest(ctx context.Context, method, url string, body any
 			Message:    fmt.Sprintf("Gateway error (%d)", resp.StatusCode),
 			HTTPStatus: resp.StatusCode,
 			Retryable:  true,
+			RequestID:  requestID,
 		}
 
 	default:
@@ -573,10 +573,10 @@ func (c *Client) singleRequest(ctx context.Context, method, url string, body any
 				msg = apiErr.Message
 			}
 			if msg != "" {
-				return nil, ErrAPI(resp.StatusCode, truncateString(msg, MaxErrorMessageBytes))
+				return nil, &Error{Code: CodeAPI, Message: truncateString(msg, MaxErrorMessageBytes), HTTPStatus: resp.StatusCode, RequestID: requestID}
 			}
 		}
-		return nil, ErrAPI(resp.StatusCode, fmt.Sprintf("Request failed (HTTP %d)", resp.StatusCode))
+		return nil, &Error{Code: CodeAPI, Message: fmt.Sprintf("Request failed (HTTP %d)", resp.StatusCode), HTTPStatus: resp.StatusCode, RequestID: requestID}
 	}
 }
 

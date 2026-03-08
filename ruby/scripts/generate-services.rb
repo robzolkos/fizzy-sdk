@@ -121,9 +121,11 @@ class ServiceGenerator
     identity cardimage directupload magiclink signup
   ].freeze
 
-  def initialize(openapi_path)
+  def initialize(openapi_path, behavior_model_path: nil)
     @openapi = JSON.parse(File.read(openapi_path))
     @schemas = @openapi.dig('components', 'schemas') || {}
+    behavior_model_path ||= File.join(File.dirname(openapi_path), 'behavior-model.json')
+    @behavior_model = File.exist?(behavior_model_path) ? JSON.parse(File.read(behavior_model_path)) : {}
   end
 
   def generate(output_dir)
@@ -156,10 +158,15 @@ class ServiceGenerator
         operation = path_item[method]
         next unless operation
 
-        tag = operation['tags']&.first || 'Untagged'
+        tag = operation['tags']&.first
         parsed = parse_operation(path, method, operation)
+        next if parsed.nil?
 
-        service_name = TAG_TO_SERVICE[tag] || tag.gsub(/\s+/, '')
+        service_name = if tag && TAG_TO_SERVICE.key?(tag)
+          TAG_TO_SERVICE[tag]
+        else
+          derive_service_name(operation['operationId'])
+        end
 
         services[service_name] ||= {
           name: service_name,
@@ -175,8 +182,57 @@ class ServiceGenerator
     services
   end
 
+  # Derive service name from operationId when tags are absent.
+  OPERATION_SERVICE_OVERRIDES = {
+    'GetMyIdentity' => 'Identity',
+    'CreateDirectUpload' => 'Uploads',
+    'RedeemMagicLink' => 'Sessions',
+    'CompleteSignup' => 'Sessions',
+    'GetNotificationTray' => 'Notifications',
+    'BulkReadNotifications' => 'Notifications',
+    'DeleteCardImage' => 'Cards'
+  }.freeze
+
+  SERVICE_SUFFIXES = [
+    [ 'CommentReactions', 'Reactions' ],
+    [ 'CommentReaction', 'Reactions' ],
+    [ 'CardReactions', 'Reactions' ],
+    [ 'CardReaction', 'Reactions' ],
+    [ 'Notifications', 'Notifications' ],
+    [ 'Notification', 'Notifications' ],
+    [ 'Comments', 'Comments' ],
+    [ 'Comment', 'Comments' ],
+    [ 'Webhooks', 'Webhooks' ],
+    [ 'Webhook', 'Webhooks' ],
+    [ 'Columns', 'Columns' ],
+    [ 'Column', 'Columns' ],
+    [ 'Boards', 'Boards' ],
+    [ 'Board', 'Boards' ],
+    [ 'Cards', 'Cards' ],
+    [ 'Card', 'Cards' ],
+    [ 'Steps', 'Steps' ],
+    [ 'Step', 'Steps' ],
+    [ 'Users', 'Users' ],
+    [ 'User', 'Users' ],
+    [ 'Tags', 'Tags' ],
+    [ 'Pins', 'Pins' ],
+    [ 'Session', 'Sessions' ],
+    [ 'Device', 'Devices' ]
+  ].freeze
+
+  def derive_service_name(operation_id)
+    return OPERATION_SERVICE_OVERRIDES[operation_id] if OPERATION_SERVICE_OVERRIDES.key?(operation_id)
+
+    SERVICE_SUFFIXES.each do |suffix, service|
+      return service if operation_id.end_with?(suffix)
+    end
+
+    'Miscellaneous'
+  end
+
   def parse_operation(path, method, operation)
     operation_id = operation['operationId']
+    return nil if operation_id.nil?
     method_name = extract_method_name(operation_id)
     http_method = method.upcase
     description = operation['description']&.lines&.first&.strip || "#{method_name} operation"
@@ -211,6 +267,13 @@ class ServiceGenerator
     returns_void = response_schema.nil?
     returns_array = response_schema&.dig('type') == 'array'
 
+    # Check behavior model: if retry_on is null and method is not POST, emit retryable: false
+    no_retry = false
+    behavior = @behavior_model.dig('operations', operation_id)
+    if behavior && behavior.dig('retry', 'retry_on').nil? && http_method != 'POST'
+      no_retry = true
+    end
+
     {
       operation_id: operation_id,
       method_name: method_name,
@@ -225,7 +288,8 @@ class ServiceGenerator
       returns_void: returns_void,
       returns_array: returns_array,
       is_mutation: http_method != 'GET',
-      has_pagination: !!operation['x-fizzy-pagination']
+      has_pagination: !!operation['x-fizzy-pagination'],
+      no_retry: no_retry
     }
   end
 
@@ -440,7 +504,7 @@ class ServiceGenerator
   def build_hook_kwargs(op, service_name)
     kwargs = []
     kwargs << "service: \"#{service_name.downcase}\""
-    kwargs << "operation: \"#{op[:method_name]}\""
+    kwargs << "operation: \"#{op[:operation_id]}\""
     kwargs << "is_mutation: #{op[:is_mutation]}"
 
     resource_param = op[:path_params].last
@@ -509,12 +573,13 @@ class ServiceGenerator
   def generate_void_method_body(op, path_expr)
     lines = []
     http_method = op[:http_method].downcase
+    retryable_kwarg = op[:no_retry] ? ', retryable: false' : ''
 
     if op[:has_body]
       body_expr = build_body_expression(op)
-      lines << "        http_#{http_method}(#{path_expr}, body: #{body_expr})"
+      lines << "        http_#{http_method}(#{path_expr}, body: #{body_expr}#{retryable_kwarg})"
     else
-      lines << "        http_#{http_method}(#{path_expr})"
+      lines << "        http_#{http_method}(#{path_expr}#{retryable_kwarg})"
     end
     lines << '        nil'
     lines
@@ -537,6 +602,7 @@ class ServiceGenerator
   def generate_get_method_body(op, path_expr)
     lines = []
     http_method = op[:http_method].downcase
+    retryable_kwarg = op[:no_retry] ? ', retryable: false' : ''
 
     if op[:has_binary_body]
       if op[:query_params].any?
@@ -551,12 +617,12 @@ class ServiceGenerator
       end
     elsif op[:has_body]
       body_expr = build_body_expression(op)
-      lines << "        http_#{http_method}(#{path_expr}, body: #{body_expr}).json"
+      lines << "        http_#{http_method}(#{path_expr}, body: #{body_expr}#{retryable_kwarg}).json"
     elsif op[:query_params].any?
       param_names = op[:query_params].map { |q| "#{to_snake_case(q[:name])}: #{to_snake_case(q[:name])}" }
-      lines << "        http_#{http_method}(#{path_expr}, params: compact_params(#{param_names.join(', ')})).json"
+      lines << "        http_#{http_method}(#{path_expr}, params: compact_params(#{param_names.join(', ')})#{retryable_kwarg}).json"
     else
-      lines << "        http_#{http_method}(#{path_expr}).json"
+      lines << "        http_#{http_method}(#{path_expr}#{retryable_kwarg}).json"
     end
 
     lines

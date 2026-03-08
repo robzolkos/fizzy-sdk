@@ -14,90 +14,102 @@ export type Column = components["schemas"]["Column"];
 export interface CreateColumnRequest {
   /** Display name */
   name: string;
-  /** Position for ordering (1-based) */
-  position?: number;
+  /** Color value */
+  color?: string;
 }
 
 export interface UpdateColumnRequest {
   /** Display name */
   name?: string;
-  /** Position for ordering (1-based) */
-  position?: number;
+  /** Color value */
+  color?: string;
 }
 
 export class ColumnsService extends BaseService {
 
   /**
-   * List all columns for a board.
+   * ListColumns
    */
-  async list(boardId: number, options?: PaginationOptions): Promise<ListResult<Column>> {
-    return this.requestPaginated(
+  async list(boardId: string): Promise<ListResult<Column>> {
+    return this.request(
       {
         service: "Columns",
-        operation: "List",
-        resourceType: "column",
+        operation: "ListColumns",
+        resourceType: "columns",
         isMutation: false,
-        boardId,
       },
       () => this.client.GET("/boards/{boardId}/columns.json" as never, {
         params: { path: { boardId } },
       } as never),
-      options,
     );
   }
 
   /**
-   * Create a new column on a board.
+   * CreateColumn
    */
-  async create(boardId: number, body: CreateColumnRequest): Promise<Column> {
+  async create(boardId: string, body: CreateColumnRequest): Promise<Column> {
     return this.request(
       {
-        service: "Columns",
-        operation: "Create",
+        service: "Column",
+        operation: "CreateColumn",
         resourceType: "column",
         isMutation: true,
-        boardId,
       },
       () => this.client.POST("/boards/{boardId}/columns.json" as never, {
         params: { path: { boardId } },
-        body: { name: body.name, position: body.position } as never,
+        body: { name: body.name, color: body.color } as never,
       } as never),
     );
   }
 
   /**
-   * Get a single column.
+   * DeleteColumn
    */
-  async get(boardId: number, columnId: number): Promise<Column> {
+  async delete(boardId: string, columnId: string): Promise<void> {
     return this.request(
       {
-        service: "Columns",
-        operation: "Get",
-        resourceType: "column",
-        isMutation: false,
-        boardId,
-      },
-      () => this.client.GET("/boards/{boardId}/columns/{columnId}.json" as never, {
-        params: { path: { boardId, columnId } },
-      } as never),
-    );
-  }
-
-  /**
-   * Update a column.
-   */
-  async update(boardId: number, columnId: number, body: UpdateColumnRequest): Promise<Column> {
-    return this.request(
-      {
-        service: "Columns",
-        operation: "Update",
+        service: "Column",
+        operation: "DeleteColumn",
         resourceType: "column",
         isMutation: true,
-        boardId,
       },
-      () => this.client.PUT("/boards/{boardId}/columns/{columnId}.json" as never, {
+      () => this.client.DELETE("/boards/{boardId}/columns/{columnId}" as never, {
         params: { path: { boardId, columnId } },
-        body: { name: body.name, position: body.position } as never,
+      } as never),
+    );
+  }
+
+  /**
+   * GetColumn
+   */
+  async get(boardId: string, columnId: string): Promise<Column> {
+    return this.request(
+      {
+        service: "Column",
+        operation: "GetColumn",
+        resourceType: "column",
+        isMutation: false,
+      },
+      () => this.client.GET("/boards/{boardId}/columns/{columnId}" as never, {
+        params: { path: { boardId, columnId } },
+      } as never),
+    );
+  }
+
+  /**
+   * UpdateColumn
+   */
+  async update(boardId: string, columnId: string, body?: UpdateColumnRequest): Promise<Column> {
+    return this.request(
+      {
+        service: "Column",
+        operation: "UpdateColumn",
+        resourceType: "column",
+        isMutation: true,
+      },
+      () => this.client.PATCH("/boards/{boardId}/columns/{columnId}" as never, {
+        params: { path: { boardId, columnId } },
+        body: { name: body?.name, color: body?.color } as never,
       } as never),
     );
   }

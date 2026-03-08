@@ -21,8 +21,8 @@ type HTTPOptions struct {
 	// Timeout is the request timeout (default: 30s).
 	Timeout time.Duration
 
-	// MaxRetries is the maximum retry attempts for GET requests (default: 3).
-	// POST/PUT/DELETE requests only get 1 retry after successful token refresh.
+	// MaxRetries is the maximum retry attempts for idempotent requests (default: 3).
+	// POST requests only get 1 retry after successful token refresh.
 	MaxRetries int
 
 	// BaseDelay is the initial backoff delay (default: 1s).
@@ -57,7 +57,7 @@ func WithTimeout(d time.Duration) ClientOption {
 	}
 }
 
-// WithMaxRetries sets the maximum number of retry attempts for GET requests.
+// WithMaxRetries sets the maximum number of retry attempts for idempotent requests.
 func WithMaxRetries(n int) ClientOption {
 	return func(c *Client) {
 		c.httpOpts.MaxRetries = n
@@ -115,6 +115,19 @@ func newDefaultTransport() http.RoundTripper {
 	t.MaxIdleConnsPerHost = 10
 	t.IdleConnTimeout = 90 * time.Second
 	return t
+}
+
+// noRetryKey is the context key for disabling retry on a request.
+type noRetryKey struct{}
+
+// WithNoRetry returns a context that disables retry for the request.
+func WithNoRetry(ctx context.Context) context.Context {
+	return context.WithValue(ctx, noRetryKey{}, true)
+}
+
+func isNoRetry(ctx context.Context) bool {
+	v, _ := ctx.Value(noRetryKey{}).(bool)
+	return v
 }
 
 // attemptKey is the context key for tracking request attempt number.
