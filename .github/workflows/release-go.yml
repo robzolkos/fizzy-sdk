@@ -83,8 +83,17 @@ jobs:
             if [ "$REMOTE_SHA" = "$GITHUB_SHA" ]; then
               echo "Tag $GO_TAG already exists at $GITHUB_SHA — nothing to do."
               exit 0
+            fi
+            # Tag exists at a different commit. If the go/ subtree is identical, treat as
+            # already published (handles benign re-tags where only non-Go files changed).
+            git fetch origin "$GO_TAG"
+            REMOTE_TREE=$(git rev-parse "$REMOTE_SHA:go")
+            LOCAL_TREE=$(git rev-parse "$GITHUB_SHA:go")
+            if [ "$REMOTE_TREE" = "$LOCAL_TREE" ]; then
+              echo "::notice::$GO_TAG exists at $REMOTE_SHA but go/ tree is identical — already published."
+              exit 0
             else
-              echo "::error::$GO_TAG already exists at $REMOTE_SHA (current: $GITHUB_SHA). Must not force-move. Create a new patch release."
+              echo "::error::$GO_TAG already exists at $REMOTE_SHA with different go/ content (current: $GITHUB_SHA). Create a new patch release."
               exit 1
             fi
           fi

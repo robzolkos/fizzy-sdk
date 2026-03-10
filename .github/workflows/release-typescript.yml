@@ -135,9 +135,21 @@ jobs:
           EVENT_NAME: ${{ github.event_name }}
           NPM_TAG: ${{ steps.npm-tag.outputs.tag }}
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}  # Bootstrap; remove after OIDC configured
+        shell: bash
         run: |
           if [[ "$EVENT_NAME" == "push" ]]; then
-            npm publish --access public --tag "$NPM_TAG" --provenance
+            set +e
+            output=$(npm publish --access public --tag "$NPM_TAG" --provenance 2>&1)
+            status=$?
+            set -e
+            echo "$output"
+            if [ "$status" -eq 0 ]; then
+              echo "Publish succeeded."
+            elif echo "$output" | grep -q "You cannot publish over the previously published versions"; then
+              echo "::notice::Version already published — treating as success for idempotency."
+            else
+              exit "$status"
+            fi
           else
             echo "::notice::Dry run mode - not actually publishing"
             npm publish --access public --tag "$NPM_TAG" --dry-run
