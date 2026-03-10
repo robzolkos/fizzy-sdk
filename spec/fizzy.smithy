@@ -291,6 +291,7 @@ structure Board {
     all_access: Boolean
     @required
     created_at: ISO8601Timestamp
+    auto_postpone_period_in_days: Integer
     @required
     url: URL
     creator: User
@@ -599,7 +600,14 @@ structure NotificationSettings {
 
 structure AccountSettings {
     @required
+    id: AccountId
+    @required
     name: String
+    @required
+    cards_count: Integer
+    @required
+    created_at: ISO8601Timestamp
+    auto_postpone_period_in_days: Integer
 }
 
 structure JoinCode {
@@ -808,6 +816,7 @@ operation ResetJoinCode {
 @fizzyRetry(maxAttempts: 3, baseDelayMs: 1000, backoff: "exponential", retryOn: [429, 500, 503])
 operation UpdateAccountEntropy {
     input: UpdateAccountEntropyInput
+    output: UpdateAccountEntropyOutput
     errors: [UnauthorizedError, ForbiddenError, ValidationError]
 }
 
@@ -816,7 +825,12 @@ structure UpdateAccountEntropyInput {
     @httpLabel
     accountId: AccountId
 
-    auto_postpone_period: Integer
+    auto_postpone_period_in_days: Integer
+}
+
+structure UpdateAccountEntropyOutput {
+    @required
+    settings: AccountSettings
 }
 
 @http(method: "POST", uri: "/{accountId}/account/exports.json")
@@ -910,7 +924,7 @@ structure CreateBoardInput {
 
     all_access: Boolean
 
-    auto_postpone_period: Integer
+    auto_postpone_period_in_days: Integer
 
     public_description: String
 }
@@ -968,7 +982,7 @@ structure UpdateBoardInput {
 
     all_access: Boolean
 
-    auto_postpone_period: Integer
+    auto_postpone_period_in_days: Integer
 
     public_description: String
 
@@ -1046,6 +1060,7 @@ structure UpdateBoardInvolvementInput {
 @fizzyRetry(maxAttempts: 3, baseDelayMs: 1000, backoff: "exponential", retryOn: [429, 500, 503])
 operation UpdateBoardEntropy {
     input: UpdateBoardEntropyInput
+    output: UpdateBoardEntropyOutput
     errors: [UnauthorizedError, ForbiddenError, NotFoundError, ValidationError]
 }
 
@@ -1058,7 +1073,12 @@ structure UpdateBoardEntropyInput {
     @httpLabel
     boardId: BoardId
 
-    auto_postpone_period: Integer
+    auto_postpone_period_in_days: Integer
+}
+
+structure UpdateBoardEntropyOutput {
+    @required
+    board: Board
 }
 
 @readonly

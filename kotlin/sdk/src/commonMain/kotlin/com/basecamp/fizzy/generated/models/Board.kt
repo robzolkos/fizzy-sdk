@@ -17,5 +17,6 @@ data class Board(
     @SerialName("all_access") val allAccess: Boolean,
     @SerialName("created_at") val createdAt: String,
     val url: String,
+    @SerialName("auto_postpone_period_in_days") val autoPostponePeriodInDays: Int = 0,
     val creator: User? = null
 )

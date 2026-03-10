@@ -37,12 +37,11 @@ module Fizzy
 
       # update_account_entropy operation
       # @param account_id [String] account id ID
-      # @param auto_postpone_period [Integer, nil] auto postpone period
-      # @return [void]
-      def update_account_entropy(account_id:, auto_postpone_period: nil)
+      # @param auto_postpone_period_in_days [Integer, nil] auto postpone period in days
+      # @return [Hash] response data
+      def update_account_entropy(account_id:, auto_postpone_period_in_days: nil)
         with_operation(service: "miscellaneous", operation: "UpdateAccountEntropy", is_mutation: true, resource_id: account_id) do
-          http_patch("/#{account_id}/account/entropy.json", body: compact_params(auto_postpone_period: auto_postpone_period))
-          nil
+          http_patch("/#{account_id}/account/entropy.json", body: compact_params(auto_postpone_period_in_days: auto_postpone_period_in_days)).json
         end
       end
 
@@ -118,12 +117,11 @@ module Fizzy
       # update_board_entropy operation
       # @param account_id [String] account id ID
       # @param board_id [String] board id ID
-      # @param auto_postpone_period [Integer, nil] auto postpone period
-      # @return [void]
-      def update_board_entropy(account_id:, board_id:, auto_postpone_period: nil)
+      # @param auto_postpone_period_in_days [Integer, nil] auto postpone period in days
+      # @return [Hash] response data
+      def update_board_entropy(account_id:, board_id:, auto_postpone_period_in_days: nil)
         with_operation(service: "miscellaneous", operation: "UpdateBoardEntropy", is_mutation: true, resource_id: board_id) do
-          http_patch("/#{account_id}/boards/#{board_id}/entropy.json", body: compact_params(auto_postpone_period: auto_postpone_period))
-          nil
+          http_patch("/#{account_id}/boards/#{board_id}/entropy.json", body: compact_params(auto_postpone_period_in_days: auto_postpone_period_in_days)).json
         end
       end
 

@@ -76,7 +76,7 @@ class MiscellaneousService(client: AccountClient) : BaseService(client) {
      * updateAccountEntropy operation
      * @param body Request body
      */
-    suspend fun updateAccountEntropy(body: UpdateAccountEntropyBody): Unit {
+    suspend fun updateAccountEntropy(body: UpdateAccountEntropyBody): JsonElement {
         val info = OperationInfo(
             service = "Miscellaneous",
             operation = "UpdateAccountEntropy",
@@ -85,11 +85,13 @@ class MiscellaneousService(client: AccountClient) : BaseService(client) {
             boardId = null,
             resourceId = null,
         )
-        request(info, {
+        return request(info, {
             httpPatch("/account/entropy.json", json.encodeToString(kotlinx.serialization.json.buildJsonObject {
-                body.autoPostponePeriod?.let { put("auto_postpone_period", kotlinx.serialization.json.JsonPrimitive(it)) }
+                body.autoPostponePeriodInDays?.let { put("auto_postpone_period_in_days", kotlinx.serialization.json.JsonPrimitive(it)) }
             }), operationName = info.operation)
-        }) { Unit }
+        }) { body ->
+            json.decodeFromString<JsonElement>(body)
+        }
     }
 
     /**
@@ -231,7 +233,7 @@ class MiscellaneousService(client: AccountClient) : BaseService(client) {
      * @param boardId The board ID
      * @param body Request body
      */
-    suspend fun updateBoardEntropy(boardId: String, body: UpdateBoardEntropyBody): Unit {
+    suspend fun updateBoardEntropy(boardId: String, body: UpdateBoardEntropyBody): Board {
         val info = OperationInfo(
             service = "Miscellaneous",
             operation = "UpdateBoardEntropy",
@@ -240,11 +242,13 @@ class MiscellaneousService(client: AccountClient) : BaseService(client) {
             boardId = boardId,
             resourceId = null,
         )
-        request(info, {
+        return request(info, {
             httpPatch("/boards/${boardId}/entropy.json", json.encodeToString(kotlinx.serialization.json.buildJsonObject {
-                body.autoPostponePeriod?.let { put("auto_postpone_period", kotlinx.serialization.json.JsonPrimitive(it)) }
+                body.autoPostponePeriodInDays?.let { put("auto_postpone_period_in_days", kotlinx.serialization.json.JsonPrimitive(it)) }
             }), operationName = info.operation)
-        }) { Unit }
+        }) { body ->
+            json.decodeFromString<Board>(body)
+        }
     }
 
     /**

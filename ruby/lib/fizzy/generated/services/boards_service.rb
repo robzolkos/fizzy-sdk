@@ -20,12 +20,12 @@ module Fizzy
       # @param account_id [String] account id ID
       # @param name [String] name
       # @param all_access [Boolean, nil] all access
-      # @param auto_postpone_period [Integer, nil] auto postpone period
+      # @param auto_postpone_period_in_days [Integer, nil] auto postpone period in days
       # @param public_description [String, nil] public description
       # @return [Hash] response data
-      def create(account_id:, name:, all_access: nil, auto_postpone_period: nil, public_description: nil)
+      def create(account_id:, name:, all_access: nil, auto_postpone_period_in_days: nil, public_description: nil)
         with_operation(service: "boards", operation: "CreateBoard", is_mutation: true, resource_id: account_id) do
-          http_post("/#{account_id}/boards.json", body: compact_params(name: name, all_access: all_access, auto_postpone_period: auto_postpone_period, public_description: public_description)).json
+          http_post("/#{account_id}/boards.json", body: compact_params(name: name, all_access: all_access, auto_postpone_period_in_days: auto_postpone_period_in_days, public_description: public_description)).json
         end
       end
 
@@ -44,13 +44,13 @@ module Fizzy
       # @param board_id [String] board id ID
       # @param name [String, nil] name
       # @param all_access [Boolean, nil] all access
-      # @param auto_postpone_period [Integer, nil] auto postpone period
+      # @param auto_postpone_period_in_days [Integer, nil] auto postpone period in days
       # @param public_description [String, nil] public description
       # @param user_ids [Array, nil] user ids
       # @return [Hash] response data
-      def update(account_id:, board_id:, name: nil, all_access: nil, auto_postpone_period: nil, public_description: nil, user_ids: nil)
+      def update(account_id:, board_id:, name: nil, all_access: nil, auto_postpone_period_in_days: nil, public_description: nil, user_ids: nil)
         with_operation(service: "boards", operation: "UpdateBoard", is_mutation: true, resource_id: board_id) do
-          http_patch("/#{account_id}/boards/#{board_id}", body: compact_params(name: name, all_access: all_access, auto_postpone_period: auto_postpone_period, public_description: public_description, user_ids: user_ids)).json
+          http_patch("/#{account_id}/boards/#{board_id}", body: compact_params(name: name, all_access: all_access, auto_postpone_period_in_days: auto_postpone_period_in_days, public_description: public_description, user_ids: user_ids)).json
         end
       end
 

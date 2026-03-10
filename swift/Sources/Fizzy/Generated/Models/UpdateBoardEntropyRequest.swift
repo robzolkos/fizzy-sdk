@@ -2,9 +2,9 @@
 import Foundation
 
 public struct UpdateBoardEntropyRequest: Codable, Sendable {
-    public var autoPostponePeriod: Int32?
+    public var autoPostponePeriodInDays: Int32?
 
-    public init(autoPostponePeriod: Int32? = nil) {
-        self.autoPostponePeriod = autoPostponePeriod
+    public init(autoPostponePeriodInDays: Int32? = nil) {
+        self.autoPostponePeriodInDays = autoPostponePeriodInDays
     }
 }

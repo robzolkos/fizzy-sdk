@@ -49,7 +49,7 @@ class BoardsService(client: AccountClient) : BaseService(client) {
             httpPost("/boards.json", json.encodeToString(kotlinx.serialization.json.buildJsonObject {
                 put("name", kotlinx.serialization.json.JsonPrimitive(body.name))
                 body.allAccess?.let { put("all_access", kotlinx.serialization.json.JsonPrimitive(it)) }
-                body.autoPostponePeriod?.let { put("auto_postpone_period", kotlinx.serialization.json.JsonPrimitive(it)) }
+                body.autoPostponePeriodInDays?.let { put("auto_postpone_period_in_days", kotlinx.serialization.json.JsonPrimitive(it)) }
                 body.publicDescription?.let { put("public_description", kotlinx.serialization.json.JsonPrimitive(it)) }
             }), operationName = info.operation)
         }) { body ->
@@ -95,7 +95,7 @@ class BoardsService(client: AccountClient) : BaseService(client) {
             httpPatch("/boards/${boardId}", json.encodeToString(kotlinx.serialization.json.buildJsonObject {
                 body.name?.let { put("name", kotlinx.serialization.json.JsonPrimitive(it)) }
                 body.allAccess?.let { put("all_access", kotlinx.serialization.json.JsonPrimitive(it)) }
-                body.autoPostponePeriod?.let { put("auto_postpone_period", kotlinx.serialization.json.JsonPrimitive(it)) }
+                body.autoPostponePeriodInDays?.let { put("auto_postpone_period_in_days", kotlinx.serialization.json.JsonPrimitive(it)) }
                 body.publicDescription?.let { put("public_description", kotlinx.serialization.json.JsonPrimitive(it)) }
                 body.userIds?.let { put("user_ids", kotlinx.serialization.json.JsonArray(it.map { kotlinx.serialization.json.JsonPrimitive(it) })) }
             }), operationName = info.operation)

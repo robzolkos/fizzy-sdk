@@ -7,6 +7,7 @@ public struct Board: Codable, Sendable {
     public let id: String
     public let name: String
     public let url: String
+    public var autoPostponePeriodInDays: Int32?
     public var creator: User?
 
     public init(
@@ -15,6 +16,7 @@ public struct Board: Codable, Sendable {
         id: String,
         name: String,
         url: String,
+        autoPostponePeriodInDays: Int32? = nil,
         creator: User? = nil
     ) {
         self.allAccess = allAccess
@@ -22,6 +24,7 @@ public struct Board: Codable, Sendable {
         self.id = id
         self.name = name
         self.url = url
+        self.autoPostponePeriodInDays = autoPostponePeriodInDays
         self.creator = creator
     }
 }

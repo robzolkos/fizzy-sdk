@@ -15,7 +15,7 @@ export interface CreateBoardRequest {
   /** Display name */
   name: string;
   allAccess?: boolean;
-  autoPostponePeriod?: number;
+  autoPostponePeriodInDays?: number;
   publicDescription?: string;
 }
 
@@ -23,7 +23,7 @@ export interface UpdateBoardRequest {
   /** Display name */
   name?: string;
   allAccess?: boolean;
-  autoPostponePeriod?: number;
+  autoPostponePeriodInDays?: number;
   publicDescription?: string;
   userIds?: string[];
 }
@@ -59,7 +59,7 @@ export class BoardsService extends BaseService {
         isMutation: true,
       },
       () => this.client.POST("/boards.json" as never, {
-        body: { name: body.name, all_access: body.allAccess, auto_postpone_period: body.autoPostponePeriod, public_description: body.publicDescription } as never,
+        body: { name: body.name, all_access: body.allAccess, auto_postpone_period_in_days: body.autoPostponePeriodInDays, public_description: body.publicDescription } as never,
       } as never),
     );
   }
@@ -111,7 +111,7 @@ export class BoardsService extends BaseService {
       },
       () => this.client.PATCH("/boards/{boardId}" as never, {
         params: { path: { boardId } },
-        body: { name: body?.name, all_access: body?.allAccess, auto_postpone_period: body?.autoPostponePeriod, public_description: body?.publicDescription, user_ids: body?.userIds } as never,
+        body: { name: body?.name, all_access: body?.allAccess, auto_postpone_period_in_days: body?.autoPostponePeriodInDays, public_description: body?.publicDescription, user_ids: body?.userIds } as never,
       } as never),
     );
   }

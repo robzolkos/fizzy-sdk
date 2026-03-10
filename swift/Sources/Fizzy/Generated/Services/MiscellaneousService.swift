@@ -148,8 +148,8 @@ public final class MiscellaneousService: BaseService, @unchecked Sendable {
         )
     }
 
-    public func updateAccountEntropy(accountId: String, req: UpdateAccountEntropyRequest) async throws {
-        try await requestVoid(
+    public func updateAccountEntropy(accountId: String, req: UpdateAccountEntropyRequest) async throws -> AccountSettings {
+        return try await request(
             OperationInfo(service: "Miscellaneous", operation: "UpdateAccountEntropy", resourceType: "account_entropy", isMutation: true),
             method: "PATCH",
             path: "/\(accountId)/account/entropy.json",
@@ -168,8 +168,8 @@ public final class MiscellaneousService: BaseService, @unchecked Sendable {
         )
     }
 
-    public func updateBoardEntropy(accountId: String, boardId: String, req: UpdateBoardEntropyRequest) async throws {
-        try await requestVoid(
+    public func updateBoardEntropy(accountId: String, boardId: String, req: UpdateBoardEntropyRequest) async throws -> Board {
+        return try await request(
             OperationInfo(service: "Miscellaneous", operation: "UpdateBoardEntropy", resourceType: "board_entropy", isMutation: true),
             method: "PATCH",
             path: "/\(accountId)/boards/\(boardId)/entropy.json",
