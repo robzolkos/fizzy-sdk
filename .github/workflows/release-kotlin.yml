@@ -34,7 +34,7 @@ jobs:
           java-version: '17'
 
       - name: Run tests
-        run: ./gradlew :fizzy-sdk:test
+        run: ./gradlew :fizzy-sdk:allTests
 
       - name: Check generated code drift
         working-directory: .
