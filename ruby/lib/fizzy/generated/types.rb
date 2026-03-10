@@ -50,11 +50,15 @@ module Fizzy
     end
 
     # @generated
-    AccountSettings = Data.define(:name) do
+    AccountSettings = Data.define(:id, :name, :cards_count, :created_at, :auto_postpone_period_in_days) do
       # @param data [Hash] raw JSON response
       def self.from_json(data)
         new(
-          name: data["name"]
+          id: data["id"],
+          name: data["name"],
+          cards_count: data["cards_count"],
+          created_at: data["created_at"],
+          auto_postpone_period_in_days: data["auto_postpone_period_in_days"]
         )
       end
     end
@@ -80,7 +84,7 @@ module Fizzy
     end
 
     # @generated
-    Board = Data.define(:id, :name, :all_access, :created_at, :url, :creator) do
+    Board = Data.define(:id, :name, :all_access, :created_at, :auto_postpone_period_in_days, :url, :creator) do
       # @param data [Hash] raw JSON response
       def self.from_json(data)
         new(
@@ -88,6 +92,7 @@ module Fizzy
           name: data["name"],
           all_access: data["all_access"],
           created_at: data["created_at"],
+          auto_postpone_period_in_days: data["auto_postpone_period_in_days"],
           url: data["url"],
           creator: data["creator"]
         )
@@ -226,13 +231,13 @@ module Fizzy
     CreateAccountExportResponseContent = Data.define
 
     # @generated
-    CreateBoardRequestContent = Data.define(:name, :all_access, :auto_postpone_period, :public_description) do
+    CreateBoardRequestContent = Data.define(:name, :all_access, :auto_postpone_period_in_days, :public_description) do
       # @param data [Hash] raw JSON response
       def self.from_json(data)
         new(
           name: data["name"],
           all_access: data["all_access"],
-          auto_postpone_period: data["auto_postpone_period"],
+          auto_postpone_period_in_days: data["auto_postpone_period_in_days"],
           public_description: data["public_description"]
         )
       end
@@ -767,14 +772,17 @@ module Fizzy
     end
 
     # @generated
-    UpdateAccountEntropyRequestContent = Data.define(:auto_postpone_period) do
+    UpdateAccountEntropyRequestContent = Data.define(:auto_postpone_period_in_days) do
       # @param data [Hash] raw JSON response
       def self.from_json(data)
         new(
-          auto_postpone_period: data["auto_postpone_period"]
+          auto_postpone_period_in_days: data["auto_postpone_period_in_days"]
         )
       end
     end
+
+    # @generated
+    UpdateAccountEntropyResponseContent = Data.define
 
     # @generated
     UpdateAccountSettingsRequestContent = Data.define(:name) do
@@ -787,14 +795,17 @@ module Fizzy
     end
 
     # @generated
-    UpdateBoardEntropyRequestContent = Data.define(:auto_postpone_period) do
+    UpdateBoardEntropyRequestContent = Data.define(:auto_postpone_period_in_days) do
       # @param data [Hash] raw JSON response
       def self.from_json(data)
         new(
-          auto_postpone_period: data["auto_postpone_period"]
+          auto_postpone_period_in_days: data["auto_postpone_period_in_days"]
         )
       end
     end
+
+    # @generated
+    UpdateBoardEntropyResponseContent = Data.define
 
     # @generated
     UpdateBoardInvolvementRequestContent = Data.define(:involvement) do
@@ -807,13 +818,13 @@ module Fizzy
     end
 
     # @generated
-    UpdateBoardRequestContent = Data.define(:name, :all_access, :auto_postpone_period, :public_description, :user_ids) do
+    UpdateBoardRequestContent = Data.define(:name, :all_access, :auto_postpone_period_in_days, :public_description, :user_ids) do
       # @param data [Hash] raw JSON response
       def self.from_json(data)
         new(
           name: data["name"],
           all_access: data["all_access"],
-          auto_postpone_period: data["auto_postpone_period"],
+          auto_postpone_period_in_days: data["auto_postpone_period_in_days"],
           public_description: data["public_description"],
           user_ids: data["user_ids"]
         )

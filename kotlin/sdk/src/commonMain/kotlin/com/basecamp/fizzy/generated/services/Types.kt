@@ -14,7 +14,7 @@ import kotlinx.serialization.json.JsonObject
 data class CreateBoardBody(
     val name: String,
     val allAccess: Boolean? = null,
-    val autoPostponePeriod: Int? = null,
+    val autoPostponePeriodInDays: Int? = null,
     val publicDescription: String? = null
 )
 
@@ -22,7 +22,7 @@ data class CreateBoardBody(
 data class UpdateBoardBody(
     val name: String? = null,
     val allAccess: Boolean? = null,
-    val autoPostponePeriod: Int? = null,
+    val autoPostponePeriodInDays: Int? = null,
     val publicDescription: String? = null,
     val userIds: List<String>? = null
 )
@@ -121,7 +121,7 @@ data class CreateAccessTokenBody(
 
 /** Request body for UpdateAccountEntropy. */
 data class UpdateAccountEntropyBody(
-    val autoPostponePeriod: Int? = null
+    val autoPostponePeriodInDays: Int? = null
 )
 
 /** Request body for UpdateJoinCode. */
@@ -136,7 +136,7 @@ data class UpdateAccountSettingsBody(
 
 /** Request body for UpdateBoardEntropy. */
 data class UpdateBoardEntropyBody(
-    val autoPostponePeriod: Int? = null
+    val autoPostponePeriodInDays: Int? = null
 )
 
 /** Request body for UpdateBoardInvolvement. */

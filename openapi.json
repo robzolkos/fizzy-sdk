@@ -974,7 +974,7 @@
             }
         },
         "/{accountId}/account/entropy.json": {
-            "patch": {
+            "put": {
                 "operationId": "UpdateAccountEntropy",
                 "requestBody": {
                     "content": {
@@ -997,7 +997,14 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "UpdateAccountEntropy 200 response"
+                        "description": "UpdateAccountEntropy 200 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UpdateAccountEntropyResponseContent"
+                                }
+                            }
+                        }
                     },
                     "400": {
                         "description": "BadRequestError 400 response",
@@ -3365,7 +3372,7 @@
             }
         },
         "/{accountId}/boards/{boardId}/entropy.json": {
-            "patch": {
+            "put": {
                 "operationId": "UpdateBoardEntropy",
                 "requestBody": {
                     "content": {
@@ -3396,7 +3403,14 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "UpdateBoardEntropy 200 response"
+                        "description": "UpdateBoardEntropy 200 response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UpdateBoardEntropyResponseContent"
+                                }
+                            }
+                        }
                     },
                     "400": {
                         "description": "BadRequestError 400 response",
@@ -11788,11 +11802,28 @@
             "AccountSettings": {
                 "type": "object",
                 "properties": {
+                    "id": {
+                        "type": "string"
+                    },
                     "name": {
                         "type": "string"
+                    },
+                    "cards_count": {
+                        "type": "integer",
+                        "format": "int32"
+                    },
+                    "created_at": {
+                        "type": "string"
+                    },
+                    "auto_postpone_period_in_days": {
+                        "type": "integer",
+                        "format": "int32"
                     }
                 },
                 "required": [
+                    "cards_count",
+                    "created_at",
+                    "id",
                     "name"
                 ]
             },
@@ -11832,6 +11863,10 @@
                     },
                     "created_at": {
                         "type": "string"
+                    },
+                    "auto_postpone_period_in_days": {
+                        "type": "integer",
+                        "format": "int32"
                     },
                     "url": {
                         "type": "string"
@@ -12098,7 +12133,7 @@
                     "all_access": {
                         "type": "boolean"
                     },
-                    "auto_postpone_period": {
+                    "auto_postpone_period_in_days": {
                         "type": "integer",
                         "format": "int32"
                     },
@@ -12917,11 +12952,14 @@
             "UpdateAccountEntropyRequestContent": {
                 "type": "object",
                 "properties": {
-                    "auto_postpone_period": {
+                    "auto_postpone_period_in_days": {
                         "type": "integer",
                         "format": "int32"
                     }
                 }
+            },
+            "UpdateAccountEntropyResponseContent": {
+                "$ref": "#/components/schemas/AccountSettings"
             },
             "UpdateAccountSettingsRequestContent": {
                 "type": "object",
@@ -12934,11 +12972,14 @@
             "UpdateBoardEntropyRequestContent": {
                 "type": "object",
                 "properties": {
-                    "auto_postpone_period": {
+                    "auto_postpone_period_in_days": {
                         "type": "integer",
                         "format": "int32"
                     }
                 }
+            },
+            "UpdateBoardEntropyResponseContent": {
+                "$ref": "#/components/schemas/Board"
             },
             "UpdateBoardInvolvementRequestContent": {
                 "type": "object",
@@ -12957,7 +12998,7 @@
                     "all_access": {
                         "type": "boolean"
                     },
-                    "auto_postpone_period": {
+                    "auto_postpone_period_in_days": {
                         "type": "integer",
                         "format": "int32"
                     },

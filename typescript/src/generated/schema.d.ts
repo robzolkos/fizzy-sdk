@@ -140,12 +140,12 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put?: never;
+        put: operations["UpdateAccountEntropy"];
         post?: never;
         delete?: never;
         options?: never;
         head?: never;
-        patch: operations["UpdateAccountEntropy"];
+        patch?: never;
         trace?: never;
     };
     "/account/exports.json": {
@@ -332,12 +332,12 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put?: never;
+        put: operations["UpdateBoardEntropy"];
         post?: never;
         delete?: never;
         options?: never;
         head?: never;
-        patch: operations["UpdateBoardEntropy"];
+        patch?: never;
         trace?: never;
     };
     "/boards/{boardId}/involvement.json": {
@@ -1102,7 +1102,13 @@ export interface components {
             download_url?: string;
         };
         AccountSettings: {
+            id: string;
             name: string;
+            /** Format: int32 */
+            cards_count: number;
+            created_at: string;
+            /** Format: int32 */
+            auto_postpone_period_in_days?: number;
         };
         AssignCardRequestContent: {
             assignee_id: string;
@@ -1115,6 +1121,8 @@ export interface components {
             name: string;
             all_access: boolean;
             created_at: string;
+            /** Format: int32 */
+            auto_postpone_period_in_days?: number;
             url: string;
             creator?: components["schemas"]["User"];
         };
@@ -1189,7 +1197,7 @@ export interface components {
             name: string;
             all_access?: boolean;
             /** Format: int32 */
-            auto_postpone_period?: number;
+            auto_postpone_period_in_days?: number;
             public_description?: string;
         };
         CreateBoardResponseContent: components["schemas"]["Board"];
@@ -1408,15 +1416,17 @@ export interface components {
         };
         UpdateAccountEntropyRequestContent: {
             /** Format: int32 */
-            auto_postpone_period?: number;
+            auto_postpone_period_in_days?: number;
         };
+        UpdateAccountEntropyResponseContent: components["schemas"]["AccountSettings"];
         UpdateAccountSettingsRequestContent: {
             name?: string;
         };
         UpdateBoardEntropyRequestContent: {
             /** Format: int32 */
-            auto_postpone_period?: number;
+            auto_postpone_period_in_days?: number;
         };
+        UpdateBoardEntropyResponseContent: components["schemas"]["Board"];
         UpdateBoardInvolvementRequestContent: {
             involvement?: string;
         };
@@ -1424,7 +1434,7 @@ export interface components {
             name?: string;
             all_access?: boolean;
             /** Format: int32 */
-            auto_postpone_period?: number;
+            auto_postpone_period_in_days?: number;
             public_description?: string;
             user_ids?: string[];
         };
@@ -2368,7 +2378,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["UpdateAccountEntropyResponseContent"];
+                };
             };
             /** @description BadRequestError 400 response */
             400: {
@@ -4156,7 +4168,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["UpdateBoardEntropyResponseContent"];
+                };
             };
             /** @description BadRequestError 400 response */
             400: {
