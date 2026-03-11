@@ -32,7 +32,11 @@ type AccountExport struct {
 
 // AccountSettings defines model for AccountSettings.
 type AccountSettings struct {
-	Name string `json:"name"`
+	AutoPostponePeriodInDays int32  `json:"auto_postpone_period_in_days,omitempty"`
+	CardsCount               int32  `json:"cards_count"`
+	CreatedAt                string `json:"created_at"`
+	Id                       string `json:"id"`
+	Name                     string `json:"name"`
 }
 
 // AssignCardRequestContent defines model for AssignCardRequestContent.
@@ -47,12 +51,13 @@ type BadRequestErrorResponseContent struct {
 
 // Board defines model for Board.
 type Board struct {
-	AllAccess bool   `json:"all_access"`
-	CreatedAt string `json:"created_at"`
-	Creator   User   `json:"creator,omitempty"`
-	Id        string `json:"id"`
-	Name      string `json:"name"`
-	Url       string `json:"url"`
+	AllAccess                bool   `json:"all_access"`
+	AutoPostponePeriodInDays int32  `json:"auto_postpone_period_in_days,omitempty"`
+	CreatedAt                string `json:"created_at"`
+	Creator                  User   `json:"creator,omitempty"`
+	Id                       string `json:"id"`
+	Name                     string `json:"name"`
+	Url                      string `json:"url"`
 }
 
 // BulkReadNotificationsRequestContent defines model for BulkReadNotificationsRequestContent.
@@ -143,10 +148,10 @@ type CreateAccountExportResponseContent = AccountExport
 
 // CreateBoardRequestContent defines model for CreateBoardRequestContent.
 type CreateBoardRequestContent struct {
-	AllAccess          bool   `json:"all_access,omitempty"`
-	AutoPostponePeriod int32  `json:"auto_postpone_period,omitempty"`
-	Name               string `json:"name"`
-	PublicDescription  string `json:"public_description,omitempty"`
+	AllAccess                bool   `json:"all_access,omitempty"`
+	AutoPostponePeriodInDays int32  `json:"auto_postpone_period_in_days,omitempty"`
+	Name                     string `json:"name"`
+	PublicDescription        string `json:"public_description,omitempty"`
 }
 
 // CreateBoardResponseContent defines model for CreateBoardResponseContent.
@@ -509,8 +514,11 @@ type UnauthorizedErrorResponseContent struct {
 
 // UpdateAccountEntropyRequestContent defines model for UpdateAccountEntropyRequestContent.
 type UpdateAccountEntropyRequestContent struct {
-	AutoPostponePeriod int32 `json:"auto_postpone_period,omitempty"`
+	AutoPostponePeriodInDays int32 `json:"auto_postpone_period_in_days,omitempty"`
 }
+
+// UpdateAccountEntropyResponseContent defines model for UpdateAccountEntropyResponseContent.
+type UpdateAccountEntropyResponseContent = AccountSettings
 
 // UpdateAccountSettingsRequestContent defines model for UpdateAccountSettingsRequestContent.
 type UpdateAccountSettingsRequestContent struct {
@@ -519,8 +527,11 @@ type UpdateAccountSettingsRequestContent struct {
 
 // UpdateBoardEntropyRequestContent defines model for UpdateBoardEntropyRequestContent.
 type UpdateBoardEntropyRequestContent struct {
-	AutoPostponePeriod int32 `json:"auto_postpone_period,omitempty"`
+	AutoPostponePeriodInDays int32 `json:"auto_postpone_period_in_days,omitempty"`
 }
+
+// UpdateBoardEntropyResponseContent defines model for UpdateBoardEntropyResponseContent.
+type UpdateBoardEntropyResponseContent = Board
 
 // UpdateBoardInvolvementRequestContent defines model for UpdateBoardInvolvementRequestContent.
 type UpdateBoardInvolvementRequestContent struct {
@@ -529,11 +540,11 @@ type UpdateBoardInvolvementRequestContent struct {
 
 // UpdateBoardRequestContent defines model for UpdateBoardRequestContent.
 type UpdateBoardRequestContent struct {
-	AllAccess          bool     `json:"all_access,omitempty"`
-	AutoPostponePeriod int32    `json:"auto_postpone_period,omitempty"`
-	Name               string   `json:"name,omitempty"`
-	PublicDescription  string   `json:"public_description,omitempty"`
-	UserIds            []string `json:"user_ids,omitempty"`
+	AllAccess                bool     `json:"all_access,omitempty"`
+	AutoPostponePeriodInDays int32    `json:"auto_postpone_period_in_days,omitempty"`
+	Name                     string   `json:"name,omitempty"`
+	PublicDescription        string   `json:"public_description,omitempty"`
+	UserIds                  []string `json:"user_ids,omitempty"`
 }
 
 // UpdateBoardResponseContent defines model for UpdateBoardResponseContent.
