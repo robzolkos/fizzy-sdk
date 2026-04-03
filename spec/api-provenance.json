@@ -5,6 +5,8 @@
     "date": "",
     "branch": "main",
     "paths": {
+      "api_docs_index": "docs/api/README.md",
+      "api_docs_sections": "docs/api/sections/",
       "routes": "config/routes.rb",
       "controllers": "app/controllers/",
       "views": "app/views/",
