@@ -23,11 +23,12 @@ Smithy spec -> OpenAPI -> Behavior Model -> Per-language generators -> SDK code
 ## Development Workflow
 
 1. Review upstream Fizzy API sources:
-   - `~/code/basecamp/fizzy/docs/api/README.md`
-   - `~/code/basecamp/fizzy/docs/api/sections/*.md`
-   - `~/code/basecamp/fizzy/config/routes.rb`
-   - `~/code/basecamp/fizzy/app/controllers/`
-   - `~/code/basecamp/fizzy/app/views/`
+   - [`docs/api/README.md`](https://github.com/basecamp/fizzy/blob/main/docs/api/README.md)
+   - [`docs/api/sections/`](https://github.com/basecamp/fizzy/tree/main/docs/api/sections)
+   - [`config/routes.rb`](https://github.com/basecamp/fizzy/blob/main/config/routes.rb)
+   - [`app/controllers/`](https://github.com/basecamp/fizzy/tree/main/app/controllers)
+   - [`app/views/`](https://github.com/basecamp/fizzy/tree/main/app/views)
+   - [`app/models/`](https://github.com/basecamp/fizzy/tree/main/app/models)
 2. Edit the Smithy spec in `spec/`
 3. Run `make smithy-build` to regenerate OpenAPI
 4. Run per-language generators: `make {lang}-generate-services`
@@ -39,12 +40,12 @@ Smithy spec -> OpenAPI -> Behavior Model -> Per-language generators -> SDK code
 
 When syncing the SDK spec to upstream Fizzy changes, treat these as the primary references:
 
-- **API docs** — `~/code/basecamp/fizzy/docs/api/README.md`
-- **API section docs** — `~/code/basecamp/fizzy/docs/api/sections/*.md`
-- **Routes** — `~/code/basecamp/fizzy/config/routes.rb`
-- **Controllers** — `~/code/basecamp/fizzy/app/controllers/`
-- **Views / JSON rendering** — `~/code/basecamp/fizzy/app/views/`
-- **Relevant models** — `~/code/basecamp/fizzy/app/models/`
+- **API docs** — [`docs/api/README.md`](https://github.com/basecamp/fizzy/blob/main/docs/api/README.md)
+- **API section docs** — [`docs/api/sections/`](https://github.com/basecamp/fizzy/tree/main/docs/api/sections)
+- **Routes** — [`config/routes.rb`](https://github.com/basecamp/fizzy/blob/main/config/routes.rb)
+- **Controllers** — [`app/controllers/`](https://github.com/basecamp/fizzy/tree/main/app/controllers)
+- **Views / JSON rendering** — [`app/views/`](https://github.com/basecamp/fizzy/tree/main/app/views)
+- **Relevant models** — [`app/models/`](https://github.com/basecamp/fizzy/tree/main/app/models)
 
 The SDK generation pipeline still starts from Smithy, but Smithy should be kept aligned with these upstream sources.
 

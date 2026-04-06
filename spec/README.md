@@ -12,12 +12,12 @@ This directory contains the canonical Fizzy spec used for SDK generation.
 
 The SDK generation pipeline starts from Smithy, but the Smithy spec is maintained against upstream Fizzy sources:
 
-- API reference docs: `basecamp/fizzy` → `docs/api/README.md`
-- API section docs: `basecamp/fizzy` → `docs/api/sections/*.md`
-- Routes: `basecamp/fizzy` → `config/routes.rb`
-- Controllers: `basecamp/fizzy` → `app/controllers/`
-- Views / JSON rendering: `basecamp/fizzy` → `app/views/`
-- Relevant models / serializers: `basecamp/fizzy` → `app/models/`
+- API reference docs: [`docs/api/README.md`](https://github.com/basecamp/fizzy/blob/main/docs/api/README.md)
+- API section docs: [`docs/api/sections/`](https://github.com/basecamp/fizzy/tree/main/docs/api/sections)
+- Routes: [`config/routes.rb`](https://github.com/basecamp/fizzy/blob/main/config/routes.rb)
+- Controllers: [`app/controllers/`](https://github.com/basecamp/fizzy/tree/main/app/controllers)
+- Views / JSON rendering: [`app/views/`](https://github.com/basecamp/fizzy/tree/main/app/views)
+- Relevant models / serializers: [`app/models/`](https://github.com/basecamp/fizzy/tree/main/app/models)
 
 ## Conventions
 

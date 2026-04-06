@@ -43,11 +43,12 @@ Alternatively, prefix commands with `mise exec --`.
 
 The SDK generators read the Smithy spec, but the Smithy spec should be maintained against upstream Fizzy API sources:
 
-- `~/code/basecamp/fizzy/docs/api/README.md`
-- `~/code/basecamp/fizzy/docs/api/sections/*.md`
-- `~/code/basecamp/fizzy/config/routes.rb`
-- `~/code/basecamp/fizzy/app/controllers/`
-- `~/code/basecamp/fizzy/app/views/`
+- [`docs/api/README.md`](https://github.com/basecamp/fizzy/blob/main/docs/api/README.md)
+- [`docs/api/sections/`](https://github.com/basecamp/fizzy/tree/main/docs/api/sections)
+- [`config/routes.rb`](https://github.com/basecamp/fizzy/blob/main/config/routes.rb)
+- [`app/controllers/`](https://github.com/basecamp/fizzy/tree/main/app/controllers)
+- [`app/views/`](https://github.com/basecamp/fizzy/tree/main/app/views)
+- [`app/models/`](https://github.com/basecamp/fizzy/tree/main/app/models)
 
 Recommended sync workflow:
 
