@@ -39,7 +39,7 @@ func (s *BoardsService) Get(ctx context.Context, boardID string) (*generated.Boa
 	return &result, resp, nil
 }
 
-// ListBoardAccesses returns boards.
+// ListBoardAccesses returns board accesses.
 func (s *BoardsService) ListBoardAccesses(ctx context.Context, boardID string, page *int64) (*generated.BoardAccesses, *Response, error) {
 	path := fmt.Sprintf("/boards/%s/accesses.json", boardID)
 	sep := "?"

@@ -20,7 +20,7 @@ func (s *UsersService) CreatePushSubscription(ctx context.Context, userID string
 	return resp, err
 }
 
-// CreateUserDataExport creates a user.
+// CreateUserDataExport creates a user data export.
 func (s *UsersService) CreateUserDataExport(ctx context.Context, userID string) (*generated.DataExport, *Response, error) {
 	resp, err := s.client.Post(ctx, fmt.Sprintf("/users/%s/data_exports.json", userID), nil)
 	if err != nil {
@@ -61,7 +61,7 @@ func (s *UsersService) Get(ctx context.Context, userID string) (*generated.User,
 	return &result, resp, nil
 }
 
-// GetUserDataExport returns a user.
+// GetUserDataExport returns a user data export.
 func (s *UsersService) GetUserDataExport(ctx context.Context, userID string, exportID string) (*generated.DataExport, *Response, error) {
 	resp, err := s.client.Get(ctx, fmt.Sprintf("/users/%s/data_exports/%s", userID, exportID))
 	if err != nil {

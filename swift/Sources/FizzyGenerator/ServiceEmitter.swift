@@ -128,7 +128,7 @@ private func emitMethod(_ op: ParsedOperation, serviceName: String, schemas: [St
                 lines.append("        for value in \(camelName) {")
                 lines.append("            queryItems.append(URLQueryItem(name: \"\(q.name)\", value: String(value)))")
                 lines.append("        }")
-            } else if q.swiftType == "Int" || q.swiftType == "Bool" {
+            } else if q.swiftType != "String" {
                 lines.append("        queryItems.append(URLQueryItem(name: \"\(q.name)\", value: String(\(camelName))))")
             } else {
                 lines.append("        queryItems.append(URLQueryItem(name: \"\(q.name)\", value: \(camelName)))")
@@ -141,7 +141,7 @@ private func emitMethod(_ op: ParsedOperation, serviceName: String, schemas: [St
                 lines.append("            for value in \(camelName) {")
                 lines.append("                queryItems.append(URLQueryItem(name: \"\(q.name)\", value: String(value)))")
                 lines.append("            }")
-            } else if q.swiftType == "Int" || q.swiftType == "Bool" {
+            } else if q.swiftType != "String" {
                 lines.append("            queryItems.append(URLQueryItem(name: \"\(q.name)\", value: String(\(camelName))))")
             } else {
                 lines.append("            queryItems.append(URLQueryItem(name: \"\(q.name)\", value: \(camelName)))")
@@ -158,7 +158,7 @@ private func emitMethod(_ op: ParsedOperation, serviceName: String, schemas: [St
                 lines.append("        for value in \(camelName) {")
                 lines.append("            queryItems.append(URLQueryItem(name: \"\(q.name)\", value: String(value)))")
                 lines.append("        }")
-            } else if q.swiftType == "Int" || q.swiftType == "Bool" {
+            } else if q.swiftType != "String" {
                 lines.append("        queryItems.append(URLQueryItem(name: \"\(q.name)\", value: String(\(camelName))))")
             } else {
                 lines.append("        queryItems.append(URLQueryItem(name: \"\(q.name)\", value: \(camelName)))")
@@ -171,7 +171,7 @@ private func emitMethod(_ op: ParsedOperation, serviceName: String, schemas: [St
                 lines.append("            for value in \(camelName) {")
                 lines.append("                queryItems.append(URLQueryItem(name: \"\(q.name)\", value: String(value)))")
                 lines.append("            }")
-            } else if q.swiftType == "Int" || q.swiftType == "Bool" {
+            } else if q.swiftType != "String" {
                 lines.append("            queryItems.append(URLQueryItem(name: \"\(q.name)\", value: String(\(camelName))))")
             } else {
                 lines.append("            queryItems.append(URLQueryItem(name: \"\(q.name)\", value: \(camelName)))")

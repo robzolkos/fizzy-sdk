@@ -11,7 +11,7 @@ import Foundation
 /// For strings without underscores (already camelCase), just lowercases
 /// the first character.
 func toCamelCase(_ str: String) -> String {
-    let normalized = str.replacingOccurrences(of: "[]", with: "")
+    let normalized = str.hasSuffix("[]") ? String(str.dropLast(2)) : str
     let parts = normalized.split(separator: "_", omittingEmptySubsequences: false)
     guard let first = parts.first else { return normalized }
     if parts.count == 1 {

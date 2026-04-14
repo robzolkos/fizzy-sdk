@@ -2,9 +2,9 @@
 import Foundation
 
 public struct ListBoardAccessesBoardOptions: Sendable {
-    public var page: Int?
+    public var page: Int32?
 
-    public init(page: Int? = nil) {
+    public init(page: Int32? = nil) {
         self.page = page
     }
 }

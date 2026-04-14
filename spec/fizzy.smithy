@@ -2617,7 +2617,7 @@ structure SearchCardsOutput {
 
 @readonly
 @http(method: "GET", uri: "/{accountId}/activities.json")
-@tags(["Cards"])
+@tags(["Activities"])
 @fizzyRetry(maxAttempts: 3, baseDelayMs: 1000, backoff: "exponential", retryOn: [429, 500, 503])
 @fizzyPagination(style: "link", pageParam: "page")
 operation ListActivities {

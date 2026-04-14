@@ -45,7 +45,7 @@ func (s *WebhooksService) Get(ctx context.Context, boardID string, webhookID str
 	return &result, resp, nil
 }
 
-// ListWebhookDeliveries returns webhooks.
+// ListWebhookDeliveries returns webhook deliveries.
 func (s *WebhooksService) ListWebhookDeliveries(ctx context.Context, boardID string, webhookID string, path string) ([]generated.WebhookDelivery, *Response, error) {
 	if path == "" {
 		path = fmt.Sprintf("/boards/%s/webhooks/%s/deliveries.json", boardID, webhookID)
