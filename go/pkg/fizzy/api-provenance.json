@@ -1,8 +1,8 @@
 {
   "fizzy": {
     "repo": "basecamp/fizzy",
-    "revision": "801da17cfa35cfacb7f3ec9088625ba21e05f2ed",
-    "date": "2026-03-10",
+    "revision": "127156e23aab970f8969338d5dfdb748b0ad900d",
+    "date": "2026-04-10",
     "branch": "main",
     "paths": {
       "api_docs_index": "docs/api/README.md",

@@ -144,14 +144,22 @@ func responseTypeName(refName string, schemas map[string]json.RawMessage) (goTyp
 // operationServiceOverrides maps operationId to service name for operations
 // whose service cannot be derived from suffix matching.
 var operationServiceOverrides = map[string]string{
-	"GetMyIdentity":         "Identity",
-	"CreateDirectUpload":    "Uploads",
-	"RedeemMagicLink":       "Sessions",
-	"CompleteJoin":          "Sessions",
-	"CompleteSignup":        "Sessions",
-	"GetNotificationTray":   "Notifications",
-	"BulkReadNotifications": "Notifications",
-	"DeleteCardImage":       "Cards",
+	"GetMyIdentity":             "Identity",
+	"CreateDirectUpload":        "Uploads",
+	"RedeemMagicLink":           "Sessions",
+	"CompleteJoin":              "Sessions",
+	"CompleteSignup":            "Sessions",
+	"GetNotificationTray":       "Notifications",
+	"BulkReadNotifications":     "Notifications",
+	"DeleteCardImage":           "Cards",
+	"ListBoardAccesses":         "Boards",
+	"ListColumnCards":           "Cards",
+	"ListActivities":            "Cards",
+	"RequestEmailAddressChange": "Users",
+	"ConfirmEmailAddressChange": "Users",
+	"CreateUserDataExport":      "Users",
+	"GetUserDataExport":         "Users",
+	"ListWebhookDeliveries":     "Webhooks",
 
 	// Access tokens (no account prefix)
 	"ListAccessTokens":  "AccessTokens",
@@ -296,7 +304,8 @@ var methodNameOverrides = map[string]string{
 	"MarkCardUnread": "MarkUnread",
 
 	// Search
-	"SearchCards": "Search",
+	"SearchCards":     "Search",
+	"ListColumnCards": "ListColumnCards",
 
 	// Notification settings
 	"GetNotificationSettings":    "GetSettings",

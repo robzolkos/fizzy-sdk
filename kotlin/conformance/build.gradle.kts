@@ -8,6 +8,10 @@ application {
     mainClass.set("com.basecamp.fizzy.conformance.MainKt")
 }
 
+tasks.withType<JavaCompile>().configureEach {
+    options.release.set(25)
+}
+
 tasks.named<JavaExec>("run") {
     workingDir = rootProject.projectDir
 }

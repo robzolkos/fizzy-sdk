@@ -302,7 +302,7 @@ fun String.toKebabCase(): String =
 
 /** "snake_case" -> "camelCase" */
 fun String.snakeToCamelCase(): String =
-    replace(Regex("_([a-z])")) { it.groupValues[1].uppercase() }
+    removeSuffix("[]").replace(Regex("_([a-z])")) { it.groupValues[1].uppercase() }
 
 fun String.capitalize(): String =
     replaceFirstChar { it.uppercase() }
