@@ -35,8 +35,8 @@ data class ListBoardAccessesOptions(
 
 /** Options for ListActivities. */
 data class ListActivitiesOptions(
-    val creatorIds: String? = null,
-    val boardIds: String? = null,
+    val creatorIds: List<String>? = null,
+    val boardIds: List<String>? = null,
     val maxItems: Int? = null
 ) {
     fun toPaginationOptions(): PaginationOptions = PaginationOptions(maxItems = maxItems)
@@ -44,18 +44,18 @@ data class ListActivitiesOptions(
 
 /** Options for ListCards. */
 data class ListCardsOptions(
-    val boardIds: String? = null,
-    val tagIds: String? = null,
-    val assigneeIds: String? = null,
-    val creatorIds: String? = null,
-    val closerIds: String? = null,
-    val cardIds: String? = null,
+    val boardIds: List<String>? = null,
+    val tagIds: List<String>? = null,
+    val assigneeIds: List<String>? = null,
+    val creatorIds: List<String>? = null,
+    val closerIds: List<String>? = null,
+    val cardIds: List<String>? = null,
     val indexedBy: String? = null,
     val sortedBy: String? = null,
     val assignmentStatus: String? = null,
     val creation: String? = null,
     val closure: String? = null,
-    val terms: String? = null,
+    val terms: List<String>? = null,
     val maxItems: Int? = null
 ) {
     fun toPaginationOptions(): PaginationOptions = PaginationOptions(maxItems = maxItems)

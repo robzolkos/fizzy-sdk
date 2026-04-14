@@ -8,6 +8,11 @@ application {
     mainClass.set("com.basecamp.fizzy.generator.MainKt")
 }
 
+java {
+    sourceCompatibility = JavaVersion.VERSION_25
+    targetCompatibility = JavaVersion.VERSION_25
+}
+
 tasks.named<JavaExec>("run") {
     workingDir = rootProject.projectDir
 }

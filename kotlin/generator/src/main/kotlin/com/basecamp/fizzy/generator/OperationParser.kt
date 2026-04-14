@@ -99,6 +99,7 @@ class OperationParser(private val api: OpenApiParser) {
                 val name = param["name"]!!.jsonPrimitive.content
                 val schema = param["schema"]!!.jsonObject
                 val type = when (schema["type"]?.jsonPrimitive?.content) {
+                    "array" -> api.schemaToKotlinType(schema)
                     "integer" -> "Long"
                     "boolean" -> "Boolean"
                     else -> "String"

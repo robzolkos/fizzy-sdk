@@ -341,18 +341,18 @@ suspend fun dispatchOperation(tc: TestCase, account: AccountClient): Any? {
 
         // Cards
         "ListCards" -> account.cards.list(ListCardsOptions(
-            boardIds = qp.strOrNull("board_ids[]"),
-            tagIds = qp.strOrNull("tag_ids[]"),
-            assigneeIds = qp.strOrNull("assignee_ids[]"),
-            creatorIds = qp.strOrNull("creator_ids[]"),
-            closerIds = qp.strOrNull("closer_ids[]"),
-            cardIds = qp.strOrNull("card_ids[]"),
+            boardIds = qp.stringListOrSingleton("board_ids[]"),
+            tagIds = qp.stringListOrSingleton("tag_ids[]"),
+            assigneeIds = qp.stringListOrSingleton("assignee_ids[]"),
+            creatorIds = qp.stringListOrSingleton("creator_ids[]"),
+            closerIds = qp.stringListOrSingleton("closer_ids[]"),
+            cardIds = qp.stringListOrSingleton("card_ids[]"),
             indexedBy = qp.strOrNull("indexed_by"),
             sortedBy = qp.strOrNull("sorted_by"),
             assignmentStatus = qp.strOrNull("assignment_status"),
             creation = qp.strOrNull("creation"),
             closure = qp.strOrNull("closure"),
-            terms = qp.strOrNull("terms[]"),
+            terms = qp.stringListOrSingleton("terms[]"),
         ))
         "CreateCard" -> account.cards.create(
             CreateCardBody(title = body?.str("title") ?: "")
@@ -401,8 +401,8 @@ suspend fun dispatchOperation(tc: TestCase, account: AccountClient): Any? {
         "PublishCard" -> account.cards.publishCard(pp.long("cardNumber"))
         "SearchCards" -> account.cards.search(qp.strOrNull("q") ?: "")
         "ListActivities" -> account.cards.listActivities(ListActivitiesOptions(
-            creatorIds = qp.strOrNull("creator_ids[]"),
-            boardIds = qp.strOrNull("board_ids[]"),
+            creatorIds = qp.stringListOrSingleton("creator_ids[]"),
+            boardIds = qp.stringListOrSingleton("board_ids[]"),
         ))
         "ListColumnCards" -> account.cards.listColumnCards(pp.string("boardId"), pp.string("columnId"))
 
