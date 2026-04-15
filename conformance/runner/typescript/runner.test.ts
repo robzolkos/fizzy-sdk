@@ -35,7 +35,7 @@ interface TestCase {
   path: string;
   pathParams?: Record<string, unknown>;
   requestBody?: Record<string, unknown>;
-  queryParams?: Record<string, string>;
+  queryParams?: Record<string, string | string[]>;
   configOverrides?: Record<string, unknown>;
   mockResponses: MockResponse[];
   assertions: Assertion[];
@@ -794,11 +794,19 @@ function checkAssertion(
       expect(log.lastRequest, `requestQueryParam: no request captured`).not.toBeNull();
       const url = new URL(log.lastRequest!.url);
       const paramName = assertion.path!;
-      const expected = String(assertion.expected);
-      expect(
-        url.searchParams.get(paramName),
-        `requestQueryParam: expected ${paramName}=${expected}`,
-      ).toBe(expected);
+      if (Array.isArray(assertion.expected)) {
+        const expected = (assertion.expected as unknown[]).map(String);
+        expect(
+          url.searchParams.getAll(paramName),
+          `requestQueryParam: expected ${paramName}=${JSON.stringify(expected)}`,
+        ).toEqual(expected);
+      } else {
+        const expected = String(assertion.expected);
+        expect(
+          url.searchParams.get(paramName),
+          `requestQueryParam: expected ${paramName}=${expected}`,
+        ).toBe(expected);
+      }
       break;
     }
 

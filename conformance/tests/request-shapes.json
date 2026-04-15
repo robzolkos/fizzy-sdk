@@ -321,6 +321,26 @@
     "tags": ["request-shapes"]
   },
   {
+    "name": "ListCards sends repeated column_ids[] values",
+    "operation": "ListCards",
+    "method": "GET",
+    "path": "/{accountId}/cards.json",
+    "pathParams": { "accountId": "999" },
+    "queryParams": { "column_ids[]": ["c1", "c2"] },
+    "mockResponses": [
+      {
+        "status": 200,
+        "headers": { "Content-Type": "application/json" },
+        "body": []
+      }
+    ],
+    "assertions": [
+      { "type": "requestQueryParam", "path": "column_ids[]", "expected": ["c1", "c2"] },
+      { "type": "noError" }
+    ],
+    "tags": ["request-shapes"]
+  },
+  {
     "name": "ListCards sends indexed_by=maybe filter query param",
     "operation": "ListCards",
     "method": "GET",
